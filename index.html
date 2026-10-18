@@ -916,7 +916,10 @@ function writeCred(m){ try{ m?localStorage.setItem(ME_KEY,JSON.stringify(m)):loc
 
 function makeDb(sb){
   const store={}, subs={}; COLS.forEach(c=>{ store[c]=new Map(); subs[c]=[]; });
-  const emit=c=>{ const docs=[...store[c].entries()].map(([id,data])=>({id,data:()=>data})); subs[c].forEach(f=>f({docs})); };
+  // deleting marks a doc {deleted:true}; hidden docs and anything hanging off a hidden place or review stay out of view
+  const gone=(col,id)=>{ const d=store[col].get(id); return !!(d&&d.deleted); };
+  const visible=(c,d)=>!d.deleted&&!(d.placeId&&c!=="places"&&gone("places",d.placeId))&&!(d.reviewId&&gone("reviews",d.reviewId));
+  const emit=c=>{ const docs=[...store[c].entries()].filter(([,d])=>d&&visible(c,d)).map(([id,data])=>({id,data:()=>data})); subs[c].forEach(f=>f({docs})); };
   const fail=(e)=>{ const m=String((e&&e.message)||e||""); const x=new Error(m);
     x.code=/forbidden/.test(m)?"forbidden":/no_member/.test(m)?"no_member":/check constraint|16000/.test(m)?"too_big":"failed"; return x; };
   const call=async(fn,args)=>{ if(!S.cred) throw fail("no_member");
@@ -935,7 +938,7 @@ function makeDb(sb){
   const start=()=>{ if(started) return; started=true;
     sb.channel("docs-all").on("postgres_changes",{event:"*",schema:"public",table:"docs"},p=>{
       if(p.eventType==="DELETE"){ const o=p.old||{}; if(store[o.col]&&store[o.col].delete(o.id)) emit(o.col); }
-      else{ const n=p.new||{}; if(store[n.col]){ store[n.col].set(n.id,n.data); emit(n.col); } }
+      else{ const n=p.new||{}; if(store[n.col]){ store[n.col].set(n.id,n.data); if(n.data&&n.data.deleted) COLS.forEach(emit); else emit(n.col); } }
     }).subscribe(st=>{ if(st==="SUBSCRIBED") load(); });
     load();
     document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(); });
@@ -951,7 +954,7 @@ function makeDb(sb){
     doc:id=>({
       set:async data=>{ await call("doc_set",{p_col:c,p_id:id,p_data:data}); store[c].set(id,{...data,createdBy:S.me}); emit(c); },
       update:async patch=>{ await call("doc_patch",{p_col:c,p_id:id,p_patch:patch}); const cur=store[c].get(id); if(cur){ store[c].set(id,{...cur,...patch}); emit(c); } },
-      delete:async()=>{ await call("doc_delete",{p_col:c,p_id:id}); dropLocal(c,id); }
+      delete:async()=>{ await call("doc_patch",{p_col:c,p_id:id,p_patch:{deleted:true,deletedAt:Date.now()}}); dropLocal(c,id); }
     })
   })};
 }
