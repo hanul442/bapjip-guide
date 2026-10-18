@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>밥집 가이드</title>
+<meta name="description" content="친구들끼리 쓰는 맛집 가이드. 가게마다 평가하고, 메뉴별로 기록해요.">
+<meta name="theme-color" content="#F3F3F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17171C" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="밥집 가이드">
+<meta property="og:title" content="밥집 가이드">
+<meta property="og:description" content="친구들끼리 쓰는 맛집 가이드">
+<meta property="og:image" content="icons/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a friends' restaurant guide. Quiet grey page, white cards with hairlines, serif names, one guide red reserved for ratings and actions; the 3-rosette grade leads every screen. */
+:root{
+  --bg:#F3F3F1; --card:#FFFFFF; --ink:#161616; --sub:#4E5968; --muted:#8B95A1; --line:#E5E8EB; --fill:#F2F4F6;
+  --blue:#B5121B; --blue-press:#8F0E15; --blue-soft:#FBECEC; --red:#F04452; --red-soft:#FFEEEE; --star:#FFC342;
+  --sea:#DCE9F7; --land:#FFFFFF; --land-2:#F7F8FA; --border-map:#C9D3DE;
+  --scrim:rgba(0,0,0,.45); --toast:rgba(25,31,40,.92);
+  --serif:"Nanum Myeongjo","AppleMyungjo",serif;
+  --font:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.4,.5,1);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17171C; --card:#202027; --ink:#F2F2F5; --sub:#B0B0BA; --muted:#7E7E8A; --line:#2C2C35; --fill:#2C2C35;
+  --blue:#E5484D; --blue-press:#C9363B; --blue-soft:#3A1C1E; --red:#F55563; --red-soft:#3A1F24; --star:#FFC95C;
+  --sea:#12161E; --land:#26262E; --land-2:#2B2B34; --border-map:#3A3A45; --scrim:rgba(0,0,0,.6); --toast:rgba(60,60,70,.95); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17171C; --card:#202027; --ink:#F2F2F5; --sub:#B0B0BA; --muted:#7E7E8A; --line:#2C2C35; --fill:#2C2C35;
+  --blue:#E5484D; --blue-press:#C9363B; --blue-soft:#3A1C1E; --red:#F55563; --red-soft:#3A1F24; --star:#FFC95C;
+  --sea:#12161E; --land:#26262E; --land-2:#2B2B34; --border-map:#3A3A45; --scrim:rgba(0,0,0,.6); --toast:rgba(60,60,70,.95); color-scheme:dark}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;letter-spacing:-.01em;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;letter-spacing:-.02em}
+button,input,textarea,select{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:12px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.hint{font-size:13px;color:var(--muted)}
+.hint.ok{color:var(--blue)}
+
+/* top bar + tabs */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-4px;padding-inline:4px}
+.bar{display:flex;align-items:center;justify-content:space-between;height:56px}
+.logo{font-family:var(--serif);font-weight:800;font-size:21px;letter-spacing:-.01em}
+.iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--sub);transition:background .2s,transform .15s var(--ease)}
+.iconbtn:hover{background:var(--fill)}
+.iconbtn:active{transform:scale(.9)}
+.iconbtn svg{width:24px;height:24px}
+.tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}
+.tabs button{height:44px;font-weight:700;font-size:15.5px;color:var(--muted);transition:color .2s}
+.tabs button[aria-selected="true"]{color:var(--ink)}
+.tabs .ink{position:absolute;bottom:-1px;left:0;height:2px;width:33.333%;background:var(--ink);transition:transform .32s var(--ease)}
+
+/* cards & rows */
+.card{background:var(--card);border-radius:14px;padding:20px;border:1px solid var(--line)}
+.card.flush{padding:8px 0}
+.card h2{font-size:17px}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:12px}
+.press{transition:transform .16s var(--ease),background .2s}
+.press:active{transform:scale(.97)}
+.row{display:flex;align-items:center;gap:14px;padding:12px 20px;width:100%;text-align:left;border-radius:14px}
+.row:hover{background:var(--fill)}
+.ava{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:17px;color:#fff}
+.row .mid{flex:1;min-width:0}
+.row .t{font-family:var(--serif);font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .s{font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .end{text-align:right;flex:none}
+.row .end b{display:block;font-weight:800;font-size:17px;color:var(--blue)}
+.row .end span{display:block}
+.row .end span{font-size:13px;color:var(--muted)}
+
+.hello{padding:18px 4px 4px}
+.hello .eyebrow{font-size:15px;color:var(--sub);font-weight:500}
+.hello h1{font-family:var(--serif);font-size:27px;line-height:1.38;margin-top:2px}
+.hello h1 em{font-style:normal;color:var(--blue)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi{min-width:0}
+.kpi .k{font-size:13px;color:var(--muted)}
+.kpi .v{font-size:20px;font-weight:700;margin-top:2px;white-space:nowrap}
+.kpi .v small{font-size:14px;font-weight:600;margin-left:1px}
+
+/* feed posts */
+.post{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.post.small{padding:14px 20px;flex-direction:row;align-items:center;gap:12px;text-align:left;width:100%}
+.post.small .txt{flex:1;min-width:0;font-size:14.5px;color:var(--sub)}
+.post.small .txt b{color:var(--ink);font-weight:600}
+.who{display:flex;align-items:center;gap:10px}
+.pic{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:none;display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff}
+.who .grow{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.who .nm{font-weight:600;font-size:15px}
+.who .tm{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.placelink{color:var(--blue);font-weight:600}
+.dish{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.dish h3{font-size:18px;font-family:var(--serif)}
+.dish .price{font-weight:600;color:var(--sub)}
+.pill{font-size:12.5px;font-weight:700;border-radius:8px;padding:3px 8px;white-space:nowrap}
+.v-best{background:var(--blue-soft);color:var(--blue)}
+.v-good{background:var(--fill);color:var(--sub)}
+.v-meh{background:var(--red-soft);color:var(--red)}
+.rtext{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
+.acts{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.act{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;font-size:14px;font-weight:600;color:var(--sub);transition:background .2s,transform .15s var(--ease)}
+.act:hover{background:var(--fill)}
+.act:active{transform:scale(.95)}
+.act svg{width:18px;height:18px}
+.act .stars{font-size:13px}
+.stars{color:var(--star);letter-spacing:.5px}
+.stars .off{color:var(--line)}
+.cmts{background:var(--fill);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:14px;animation:fold .3s var(--ease) both}
+@keyframes fold{from{opacity:0;transform:translateY(-6px)}}
+.cmt{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.cmt b{font-weight:600}
+.cmt .t{overflow-wrap:anywhere;min-width:0;color:var(--sub)}
+.cform{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cform input{flex:1 1 140px;min-width:0;border:0;background:var(--card);border-radius:10px;padding:8px 12px;font-size:14px}
+.cform input:focus{outline:2px solid var(--blue)}
+.sbtn{background:var(--blue);color:#fff;font-weight:700;font-size:14px;border-radius:10px;padding:8px 14px;transition:transform .15s var(--ease)}
+.sbtn:active{transform:scale(.94)}
+.sbtn:disabled{opacity:.5}
+.starpick{display:inline-flex}
+.starpick button{font-size:24px;line-height:1;color:var(--line);padding:0 1px;transition:transform .2s var(--spring),color .15s}
+.starpick button.on{color:var(--star)}
+.starpick button.pop{transform:scale(1.35)}
+.prate .prow{display:flex;align-items:center;gap:10px}
+.prate .big{font-size:34px;font-weight:800;letter-spacing:-.03em}
+.prate .prow .stars{font-size:20px}
+.prate .mine{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.prate .lbl{font-size:14px;font-weight:600;color:var(--sub)}
+.starpick.big button{font-size:34px;padding:0 2px}
+/* rosettes: the grade */
+.rose{width:1em;height:1em;flex:none;display:inline-block;vertical-align:-.12em}
+.rose g{fill:var(--line)}
+.rose.on g{fill:var(--blue)}
+.rose .eye{fill:var(--card)}
+.roses{display:inline-flex;gap:2px;font-size:16px;align-items:center}
+.roses.sm{font-size:14px}
+.roses.big{font-size:40px;gap:6px}
+.roses.none{font-size:12.5px;color:var(--muted);font-weight:600;border:1px dashed var(--line);border-radius:6px;padding:1px 6px}
+.roses.big.none{font-size:14px;padding:4px 10px}
+.verdict{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 20px 20px;border-top:3px solid var(--blue)}
+.verdict .vr .rose{animation:bloom .6s var(--spring) both}
+.verdict .vr .rose:nth-child(2){animation-delay:.1s}.verdict .vr .rose:nth-child(3){animation-delay:.2s}
+@keyframes bloom{from{transform:scale(.3) rotate(-60deg);opacity:0}}
+.verdict .vg{font-family:var(--serif);font-weight:800;font-size:19px;margin-top:4px}
+.mylbl{margin-top:14px;font-size:13.5px;font-weight:600;color:var(--sub)}
+.ratebox{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.pick{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);transition:border-color .2s,background .2s,transform .15s var(--ease)}
+.pick:hover{border-color:var(--blue)}
+.pick:active{transform:scale(.95)}
+.pick .pr{display:inline-flex;gap:2px;font-size:22px}
+.pick .pr .rose g{fill:var(--muted);opacity:.45}
+.pick .pl{font-size:13px;font-weight:600;color:var(--sub);text-align:center}
+.pick.chosen{border-color:var(--blue);background:var(--blue-soft)}
+.pick.chosen .pr .rose g{fill:var(--blue);opacity:1}
+.pick.chosen .pl{color:var(--blue)}
+.pick.pop .pr{animation:bloom .45s var(--spring)}
+.ratebox.compact{gap:6px}
+.ratebox.compact .pick{padding:10px 4px 8px}
+.ratebox.compact .pick .pr{font-size:16px}
+.ratebox.compact .pick .pl{font-size:11.5px}
+.tally{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:16px}
+.tally .tl{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.tally b{font-size:17px}
+.hscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding:2px 16px 4px;scroll-snap-type:x mandatory}
+.hscroll::-webkit-scrollbar{display:none}
+.tocard{flex:none;width:min(300px,80vw);scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.tc-h{display:flex;flex-direction:column;text-align:left;gap:2px}
+.tc-n{font-family:var(--serif);font-weight:800;font-size:18px}
+.ptag{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--serif);font-weight:800;font-size:15px;padding-bottom:8px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.ghead{display:flex;align-items:center;gap:10px;padding:16px 4px 2px}
+.ghead h2{font-family:var(--serif);font-size:18px;flex:1;min-width:0}
+.pcs{display:flex;flex-direction:column;gap:14px}
+.pc{display:flex;gap:10px;align-items:flex-start}
+.pcb{flex:1;min-width:0;font-size:14.5px}
+.pcb .t{overflow-wrap:anywhere;margin-top:2px}
+.pv-r{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.xdel{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex:none;transition:background .2s,color .2s}
+.xdel:hover{background:var(--fill);color:var(--blue)}
+.xdel svg{width:18px;height:18px}
+.xdel.armed{width:auto;padding:0 10px;background:var(--blue-soft);color:var(--blue);font-size:12.5px;font-weight:700}
+.danger{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-weight:600;margin-top:12px;transition:color .2s,border-color .2s}
+.danger:hover{color:var(--blue);border-color:var(--blue)}
+.danger.armed{background:var(--blue);color:#fff;border-color:var(--blue)}
+.danger svg{width:18px;height:18px}
+.link{color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+
+/* search + chips */
+.search{width:100%;border:0;background:var(--card);border-radius:14px;padding:13px 16px 13px 44px;font-size:15.5px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B95A1' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:14px 50%;background-size:20px}
+.search:focus{outline:2px solid var(--blue)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 14px;border-radius:999px;background:var(--card);color:var(--sub);font-weight:600;font-size:14px;transition:background .2s,color .2s,transform .15s var(--ease)}
+.chip:active{transform:scale(.94)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+
+/* real map */
+.mapwrap{position:relative;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:var(--sea)}
+.mapwrap>svg{display:block;width:100%;height:clamp(320px,62vh,560px);touch-action:none;cursor:grab;user-select:none}
+.mapwrap.mini>svg{height:240px}
+.mapwrap.pick>svg{height:320px;cursor:crosshair}
+.cta:disabled{opacity:.45;cursor:default;transform:none}
+.mapwrap>svg.drag{cursor:grabbing}
+.land{fill:var(--land);stroke:var(--border-map);stroke-linejoin:round}
+.gu{fill:var(--land-2);stroke:var(--border-map)}
+.maplabel{fill:var(--muted);font-weight:600;text-anchor:middle;pointer-events:none}
+.pin{cursor:pointer}
+.pin .plabel{font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--land);text-anchor:middle}
+.pin.sel .plabel{fill:var(--blue)}
+.pin .head{transform-box:fill-box;transform-origin:50% 100%;animation:drop .5s var(--spring) both;animation-delay:calc(var(--i,0) * 60ms)}
+.mapwrap.still .pin .head{animation:none}
+@keyframes drop{from{transform:translateY(-40%) scale(.5);opacity:0}}
+.mapctl{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+.mapctl button{width:38px;height:38px;border-radius:12px;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.12);display:grid;place-items:center;color:var(--ink);font-size:20px;font-weight:600;transition:transform .15s var(--ease)}
+.mapctl button:active{transform:scale(.9)}
+.mapctl svg{width:20px;height:20px}
+.preview{position:absolute;left:12px;right:12px;bottom:12px;background:var(--card);border-radius:18px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:14px 16px;display:flex;align-items:center;gap:12px;
+  animation:pop .32s var(--spring) both}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.97)}}
+.preview .mid{flex:1;min-width:0}
+.preview .t{font-family:var(--serif);font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview .s{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.maphint{font-size:12.5px;color:var(--muted);padding:6px 4px 0}
+
+/* detail */
+.dhead{padding:12px 4px 4px}
+.dhead .s{color:var(--sub);font-size:15px}
+.dhead h1{font-family:var(--serif);font-size:32px;line-height:1.25}
+.cta{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:54px;border-radius:16px;background:var(--blue);color:#fff;font-weight:700;font-size:16.5px;text-decoration:none;transition:background .2s,transform .16s var(--ease)}
+.cta:hover{background:var(--blue-press)}
+.cta:active{transform:scale(.97)}
+.cta.soft{background:var(--blue-soft);color:var(--blue)}
+.cta.soft:hover{filter:brightness(.97);background:var(--blue-soft)}
+.cta.sm{width:auto;height:40px;padding:0 16px;font-size:14.5px;border-radius:12px;flex:none}
+.cta svg{width:20px;height:20px}
+.rank{display:flex;flex-direction:column;gap:14px}
+.rank .r{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center}
+.rank .n{font-weight:700;color:var(--blue);font-size:15px}
+.rank .name{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.rank .c{font-size:13.5px;color:var(--muted)}
+.bar-track{grid-column:2 / 4;height:8px;border-radius:99px;background:var(--fill);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:var(--blue);transform-origin:left;animation:grow .9s var(--ease) both;animation-delay:calc(var(--i,0) * 90ms + 150ms)}
+@keyframes grow{from{transform:scaleX(0)}}
+.sect{font-size:17px;padding:14px 4px 0}
+
+.empty{text-align:center;padding:36px 20px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.empty h2{font-size:18px}
+.empty p{color:var(--muted);margin:0}
+.empty .cta{width:auto;padding:0 22px;height:46px;margin-top:10px;font-size:15px}
+
+/* dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:linear-gradient(transparent,var(--bg) 35%);pointer-events:none}
+.dock .cta{max-width:600px;margin:0 auto;pointer-events:auto;box-shadow:0 6px 20px rgba(181,18,27,.25)}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;opacity:0;transition:opacity .25s var(--ease)}
+.scrim.show{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:24px 24px 0 0;max-height:88vh;overflow:auto;
+  padding:10px max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));
+  transform:translateY(105%);transition:transform .38s var(--ease)}
+.sheet.show{transform:none}
+.sheet-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 6px}
+.sheet h2{font-size:22px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.lbl{font-size:13.5px;color:var(--sub);font-weight:600}
+.field input,.field textarea,.field select{border:0;border-radius:14px;background:var(--fill);padding:14px 16px;font-size:16px;width:100%;transition:box-shadow .2s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;box-shadow:inset 0 0 0 2px var(--blue)}
+.field textarea{min-height:96px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--fill);padding:4px;border-radius:14px}
+.seg button{border-radius:11px;padding:10px 4px;font-weight:600;color:var(--sub);transition:background .2s,color .2s}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.wrapchips{display:flex;flex-wrap:wrap;gap:8px}
+.wrapchips .chip{background:var(--fill)}
+.wrapchips .chip[aria-pressed="true"]{background:var(--blue);color:#fff}
+.err{color:var(--red);font-size:13.5px;min-height:1em}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--toast);color:#fff;font-weight:600;font-size:14.5px;
+  padding:12px 18px;border-radius:14px;transform:translate(-50%,20px);opacity:0;transition:transform .3s var(--spring),opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.show{transform:translate(-50%,0);opacity:1}
+.note{background:var(--blue-soft);color:var(--ink);border-radius:14px;padding:12px 16px;font-size:14px}
+
+.view{display:flex;flex-direction:column;gap:12px}
+.view.in-fwd{animation:inR .36s var(--ease) both}
+.view.in-back{animation:inL .36s var(--ease) both}
+.view.in-fade{animation:inF .3s var(--ease) both}
+@keyframes inR{from{opacity:0;transform:translateX(28px)}}
+@keyframes inL{from{opacity:0;transform:translateX(-28px)}}
+@keyframes inF{from{opacity:0;transform:translateY(8px)}}
+.view.stagger .st{animation:up .5s var(--ease) both;animation-delay:calc(min(var(--i,0),10) * 50ms)}
+@keyframes up{from{opacity:0;transform:translateY(14px)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before{animation:none!important;transition:opacity .15s!important}
+  .sheet{transform:none;opacity:0;visibility:hidden}.sheet.show{opacity:1;visibility:visible}
+}
+[hidden]{display:none!important}
+html,body{margin:0}
+html{-webkit-text-size-adjust:100%}
+#install{display:flex;gap:10px;align-items:center}
+#install[hidden]{display:none}
+#install .grow{flex:1;min-width:0}
+#install .sbtn{flex:none}
+#installX{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.bar .right{display:flex;gap:2px;align-items:center}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top">
+    <div class="bar">
+      <button class="iconbtn" id="backBtn" type="button" aria-label="뒤로" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="logo" id="logo">밥집 가이드</span>
+      <span class="right">
+      <button class="iconbtn" id="meBtn" type="button" aria-label="내 이름" title="내 이름">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      </button>
+      <button class="iconbtn" id="openAdd" type="button" aria-label="가게 등록" title="가게 등록">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      </span>
+    </div>
+    <div class="tabs" id="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="feed" aria-selected="true">소식</button>
+      <button type="button" role="tab" data-tab="map" aria-selected="false">지도</button>
+      <button type="button" role="tab" data-tab="list" aria-selected="false">가이드</button>
+      <span class="ink" id="tabInk"></span>
+    </div>
+  </div>
+  <div id="statusNote" class="note" hidden></div>
+  <div id="install" class="note" hidden><span class="grow" id="installTxt"></span><button class="sbtn" type="button" id="installGo" hidden>설치</button><button type="button" id="installX" aria-label="닫기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <main id="view" class="view"></main>
+</div>
+
+<div class="dock" id="dock" hidden><button class="cta" type="button" id="dockBtn">먹은 메뉴 기록하기</button></div>
+<div class="scrim" id="scrim" hidden></div>
+
+<form class="sheet" id="addSheet" hidden aria-label="가게 등록" role="dialog">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <h2>어떤 가게를 등록할까요?</h2>
+    <div class="field">
+      <label for="pMap">지도 링크</label>
+      <input id="pMap" type="url" inputmode="url" placeholder="네이버 지도, 카카오맵, 구글 지도 링크">
+      <span class="hint" id="pMapHint">링크를 붙여 넣으면 가게 이름과 위치를 알아서 읽어요.</span>
+    </div>
+    <div class="two">
+      <div class="field"><label for="pName">가게 이름</label><input id="pName" maxlength="60" autocomplete="off"></div>
+      <div class="field"><label for="pArea">동네</label><input id="pArea" maxlength="40" placeholder="예: 연남동" autocomplete="off"></div>
+    </div>
+    <div class="field"><span class="lbl">종류</span><div class="wrapchips" id="pCat"></div></div>
+    <span class="err" id="pErr"></span>
+    <button class="cta" type="submit" id="pSave">등록하기</button>
+  </div>
+</form>
+
+<form class="sheet" id="rSheet" hidden aria-label="먹은 메뉴 기록" role="dialog">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <h2>뭐 먹었어요?</h2>
+    <div class="field" id="rPlaceField"><label for="rPlace">가게</label><select id="rPlace"></select></div>
+    <div class="two">
+      <div class="field"><label for="rMenu">메뉴</label><input id="rMenu" maxlength="50" list="menuList" autocomplete="off" placeholder="예: 모듬곱창"><datalist id="menuList"></datalist></div>
+      <div class="field"><label for="rPrice">가격</label><input id="rPrice" inputmode="numeric" maxlength="11" placeholder="예: 23,000원" autocomplete="off"></div>
+    </div>
+    <div class="field"><span class="lbl">한 줄 평</span><div class="seg" id="rVerdict"></div></div>
+    <div class="field"><label for="rText">후기</label><textarea id="rText" maxlength="2000" placeholder="맛, 양, 가성비 같은 거 자유롭게"></textarea></div>
+    <span class="err" id="rErr"></span>
+    <button class="cta" type="submit" id="rSave">올리기</button>
+  </div>
+</form>
+
+<form class="sheet" id="joinSheet" hidden aria-label="내 이름" role="dialog">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <h2 id="jTitle">친구들이 볼 이름을 정해 주세요</h2>
+    <div class="field"><label for="jName">이름</label><input id="jName" maxlength="20" autocomplete="nickname" placeholder="예: 한서"></div>
+    <span class="err" id="jErr"></span>
+    <button class="cta" type="submit" id="jSave">시작하기</button>
+    <p class="hint" id="jMore" style="margin:14px 0 0"></p>
+  </div>
+</form>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="vendor/supabase.js"></script>
+
+<script>
+const GEO={"seoul":[["강동구",[[127.1152,37.5575,127.1188,37.5572,127.1215,37.5599,127.1244,37.5614,127.1359,37.5656,127.1493,37.5689,127.1551,37.5709,127.1668,37.5767,127.1704,37.5765,127.1761,37.5768,127.1791,37.5779,127.1775,37.5745,127.1782,37.5715,127.18,37.5693,127.1812,37.5664,127.1817,37.5629,127.1841,37.5581,127.1835,37.5501,127.1853,37.5489,127.1848,37.5453,127.1854,37.5426,127.1836,37.5424,127.1812,37.5438,127.1777,37.5424,127.1744,37.5428,127.1683,37.5415,127.1653,37.5422,127.1557,37.5312,127.1554,37.5265,127.1515,37.5228,127.1498,37.5193,127.1479,37.5192,127.1468,37.5166,127.1467,37.5142,127.1453,37.5146,127.1212,37.5253,127.1225,37.5275,127.1253,37.5357,127.1206,37.5381,127.1117,37.5407,127.1142,37.5447,127.116,37.5505,127.116,37.5558,127.1152,37.5575]]],["송파구",[[127.0691,37.5223,127.075,37.5209,127.0797,37.5208,127.0864,37.5216,127.0944,37.524,127.1009,37.5248,127.1048,37.5312,127.1117,37.5407,127.1206,37.5381,127.1253,37.5357,127.1225,37.5275,127.1212,37.5253,127.1453,37.5146,127.1467,37.5142,127.1467,37.5128,127.1446,37.5115,127.1432,37.5095,127.1421,37.5058,127.1432,37.5026,127.1474,37.5007,127.1498,37.5005,127.1522,37.5017,127.154,37.5003,127.1609,37.4989,127.1635,37.4974,127.162,37.494,127.1622,37.4916,127.1604,37.4878,127.1589,37.4861,127.1539,37.4848,127.1515,37.4775,127.1515,37.4756,127.1486,37.4738,127.1442,37.4737,127.1411,37.4706,127.1363,37.4721,127.1328,37.4726,127.1331,37.4689,127.1375,37.4665,127.1348,37.4651,127.1308,37.4651,127.1273,37.4667,127.1273,37.4642,127.1244,37.4624,127.1244,37.4644,127.1227,37.4676,127.1138,37.4796,127.1144,37.4807,127.1112,37.4857,127.1078,37.4886,127.1043,37.4907,127.0989,37.493,127.0805,37.4978,127.0765,37.4986,127.0719,37.5022,127.0693,37.5172,127.0686,37.5181,127.0691,37.5223]]],["강남구",[[127.0587,37.5263,127.0691,37.5223,127.0686,37.5181,127.0693,37.5172,127.0719,37.5022,127.0765,37.4986,127.0805,37.4978,127.0989,37.493,127.1043,37.4907,127.1078,37.4886,127.1112,37.4857,127.1144,37.4807,127.1138,37.4796,127.1227,37.4676,127.1244,37.4644,127.1244,37.4624,127.1196,37.4594,127.1189,37.4558,127.1154,37.4572,127.1141,37.4588,127.1084,37.4597,127.1056,37.4568,127.1003,37.456,127.0984,37.4586,127.0971,37.4608,127.0904,37.4655,127.0866,37.4701,127.0864,37.4727,127.0803,37.472,127.076,37.4701,127.0748,37.472,127.0723,37.4723,127.0714,37.4711,127.0646,37.47,127.0637,37.4662,127.0589,37.4656,127.0559,37.4659,127.0471,37.4745,127.0435,37.4828,127.0362,37.4818,127.0337,37.4867,127.0227,37.51,127.0204,37.5177,127.0192,37.5201,127.014,37.525,127.023,37.5323,127.027,37.5348,127.032,37.5361,127.0481,37.5297,127.049,37.5314,127.0512,37.5298,127.0587,37.5263]]],["서초구",[[127.014,37.525,127.0192,37.5201,127.0204,37.5177,127.0227,37.51,127.0337,37.4867,127.0362,37.4818,127.0435,37.4828,127.0471,37.4745,127.0559,37.4659,127.0589,37.4656,127.0637,37.4662,127.0646,37.47,127.0714,37.4711,127.0723,37.4723,127.0748,37.472,127.076,37.4701,127.0803,37.472,127.0864,37.4727,127.0866,37.4701,127.0904,37.4655,127.0971,37.4608,127.0984,37.4586,127.0967,37.456,127.0972,37.4537,127.0958,37.4533,127.0947,37.4509,127.0929,37.45,127.0905,37.4464,127.0905,37.443,127.0862,37.4412,127.0844,37.4384,127.0769,37.4396,127.0738,37.439,127.0741,37.4372,127.0767,37.436,127.076,37.4343,127.0736,37.4332,127.0727,37.4294,127.0734,37.4281,127.0689,37.4273,127.0678,37.4262,127.0632,37.4273,127.06,37.4273,127.0542,37.4257,127.052,37.4275,127.0496,37.428,127.0485,37.4307,127.0419,37.4357,127.038,37.4363,127.0375,37.4384,127.0403,37.4419,127.0396,37.4436,127.0399,37.4466,127.0383,37.4488,127.0392,37.4518,127.0388,37.4538,127.037,37.4554,127.0357,37.4587,127.0368,37.461,127.0334,37.463,127.0282,37.4557,127.0226,37.4534,127.0183,37.4526,127.0132,37.4526,127.0111,37.4546,127.0084,37.4594,127.0074,37.4598,127.0055,37.4645,127.0001,37.4646,126.9984,37.4639,126.9993,37.4611,126.9989,37.4594,126.9953,37.4586,126.9907,37.4553,126.9896,37.4576,126.9903,37.4627,126.989,37.465,126.9866,37.4669,126.9846,37.47,126.9837,37.4739,126.985,37.4936,126.9872,37.4972,126.9832,37.4995,126.9824,37.5012,126.9822,37.5093,126.9846,37.5107,126.9895,37.5109,126.9915,37.5099,127.0001,37.5139,127.0058,37.5169,127.0082,37.5188,127.0102,37.522,127.014,37.525]]],["관악구",[[126.9837,37.4739,126.9846,37.47,126.9866,37.4669,126.989,37.465,126.9903,37.4627,126.9896,37.4576,126.9907,37.4553,126.9848,37.4539,126.9829,37.4502,126.9784,37.4477,126.9761,37.4448,126.9731,37.4447,126.9665,37.4428,126.9662,37.4394,126.9652,37.4382,126.9615,37.438,126.9605,37.4367,126.9553,37.4367,126.9474,37.4348,126.9444,37.4348,126.9415,37.4332,126.9404,37.4346,126.9406,37.4375,126.9377,37.4404,126.9331,37.4429,126.9331,37.4453,126.9308,37.4474,126.9253,37.4516,126.9245,37.4539,126.9189,37.455,126.9168,37.4549,126.9164,37.4587,126.915,37.4612,126.9158,37.4625,126.9137,37.4638,126.9103,37.4698,126.9128,37.4708,126.9141,37.4742,126.9116,37.4754,126.9118,37.4781,126.9028,37.4765,126.9016,37.4775,126.9053,37.4822,126.9081,37.4822,126.9153,37.4844,126.9192,37.4866,126.9264,37.4872,126.9287,37.4913,126.9298,37.4922,126.9335,37.4904,126.9367,37.4903,126.9384,37.4894,126.9437,37.4894,126.9492,37.4913,126.954,37.4896,126.956,37.4882,126.9588,37.4887,126.9633,37.4906,126.9629,37.488,126.9644,37.4844,126.9634,37.4807,126.9726,37.4726,126.979,37.4738,126.9837,37.4739]]],["동작구",[[126.9822,37.5093,126.9824,37.5012,126.9832,37.4995,126.9872,37.4972,126.985,37.4936,126.9837,37.4739,126.979,37.4738,126.9726,37.4726,126.9634,37.4807,126.9644,37.4844,126.9629,37.488,126.9633,37.4906,126.9588,37.4887,126.956,37.4882,126.954,37.4896,126.9492,37.4913,126.9437,37.4894,126.9384,37.4894,126.9367,37.4903,126.9335,37.4904,126.9298,37.4922,126.9287,37.4913,126.9264,37.4872,126.9192,37.4866,126.9153,37.4844,126.9081,37.4822,126.9053,37.4822,126.9146,37.4936,126.9218,37.4949,126.9232,37.4993,126.9275,37.5099,126.9292,37.5102,126.9281,37.5133,126.9345,37.5129,126.9441,37.5146,126.9525,37.5172,126.9555,37.5147,126.9595,37.5125,126.9667,37.51,126.9822,37.5093]]],["영등포구",[[126.8918,37.5474,126.9028,37.5413,126.9083,37.5392,126.9313,37.5342,126.9368,37.5334,126.9457,37.5266,126.9488,37.5242,126.95,37.5208,126.9525,37.5172,126.9441,37.5146,126.9345,37.5129,126.9281,37.5133,126.9292,37.5102,126.9275,37.5099,126.9232,37.4993,126.9218,37.4949,126.9146,37.4936,126.9053,37.4822,126.9026,37.4828,126.8986,37.4863,126.8958,37.4939,126.8955,37.5003,126.8959,37.5047,126.8925,37.5088,126.8816,37.514,126.8819,37.5194,126.8826,37.5224,126.8838,37.5235,126.889,37.5259,126.8906,37.5279,126.8921,37.5276,126.8936,37.5303,126.8934,37.533,126.8894,37.5406,126.8883,37.5408,126.8874,37.5435,126.8918,37.5474]]],["금천구",[[126.9016,37.4775,126.9028,37.4765,126.9118,37.4781,126.9116,37.4754,126.9141,37.4742,126.9128,37.4708,126.9103,37.4698,126.9137,37.4638,126.9158,37.4625,126.915,37.4612,126.9164,37.4587,126.9168,37.4549,126.9189,37.455,126.9245,37.4539,126.9253,37.4516,126.9308,37.4474,126.9256,37.4438,126.9232,37.4413,126.922,37.4385,126.92,37.4371,126.9164,37.4372,126.9134,37.4347,126.9108,37.431,126.9049,37.4313,126.9048,37.4331,126.9015,37.4353,126.9008,37.4365,126.9011,37.4403,126.9003,37.4418,126.8977,37.4429,126.8981,37.4455,126.8962,37.4498,126.8947,37.4491,126.8916,37.4499,126.8911,37.4524,126.8883,37.4536,126.8883,37.4566,126.8907,37.4597,126.882,37.47,126.8787,37.4748,126.8755,37.4819,126.8768,37.4826,126.8808,37.4838,126.8827,37.4832,126.888,37.4798,126.8912,37.4768,126.8969,37.4757,126.901,37.4761,126.9016,37.4775]]],["구로구",[[126.8269,37.5055,126.8312,37.5054,126.8342,37.5024,126.8385,37.4997,126.8427,37.5012,126.8421,37.5027,126.8469,37.5029,126.8473,37.5052,126.8508,37.506,126.8522,37.5073,126.855,37.5078,126.8577,37.5064,126.8602,37.5071,126.8622,37.5039,126.8645,37.5039,126.8653,37.5024,126.868,37.5028,126.8711,37.502,126.8743,37.5026,126.8756,37.5057,126.8805,37.5115,126.8816,37.514,126.8925,37.5088,126.8959,37.5047,126.8955,37.5003,126.8958,37.4939,126.8986,37.4863,126.9026,37.4828,126.9053,37.4822,126.9016,37.4775,126.901,37.4761,126.8969,37.4757,126.8912,37.4768,126.888,37.4798,126.8827,37.4832,126.8808,37.4838,126.8768,37.4826,126.8793,37.4851,126.8781,37.4862,126.875,37.4855,126.875,37.4872,126.8699,37.491,126.8669,37.4885,126.8633,37.487,126.8598,37.4831,126.8572,37.4824,126.8558,37.4801,126.854,37.4788,126.8491,37.4793,126.848,37.4782,126.8476,37.4715,126.8415,37.4729,126.8375,37.4725,126.8339,37.4748,126.8314,37.4734,126.8266,37.4736,126.8242,37.473,126.8218,37.4752,126.8221,37.4789,126.8214,37.4814,126.8221,37.483,126.8256,37.485,126.8248,37.4872,126.8199,37.4888,126.8165,37.4905,126.8148,37.4934,126.8152,37.4952,126.8177,37.4947,126.8208,37.4959,126.822,37.4985,126.8237,37.4993,126.825,37.503,126.8247,37.505,126.8269,37.5055]]],["강서구",[[126.8598,37.5718,126.8595,37.5683,126.8605,37.5668,126.8684,37.5631,126.88,37.5551,126.8918,37.5474,126.8874,37.5435,126.8883,37.5408,126.8872,37.5408,126.8828,37.5451,126.8761,37.5441,126.8728,37.5449,126.8664,37.5486,126.8643,37.5417,126.8658,37.5382,126.8655,37.5338,126.8661,37.527,126.851,37.5251,126.8426,37.5237,126.8366,37.5337,126.8372,37.5349,126.8352,37.539,126.8325,37.539,126.8319,37.5415,126.8302,37.5426,126.8289,37.5391,126.8242,37.5379,126.8167,37.5378,126.8125,37.5388,126.8114,37.5403,126.8054,37.5401,126.8019,37.5376,126.8009,37.535,126.7969,37.533,126.7958,37.5366,126.7969,37.5387,126.7939,37.539,126.7939,37.541,126.7908,37.5417,126.7888,37.5435,126.782,37.5434,126.7776,37.5461,126.7732,37.5459,126.7698,37.5505,126.767,37.5528,126.7707,37.553,126.7715,37.5543,126.7788,37.5592,126.7789,37.5614,126.7767,37.5645,126.7799,37.5642,126.7825,37.5654,126.7847,37.5675,126.784,37.5691,126.785,37.5709,126.7917,37.5747,126.7954,37.5745,126.7952,37.5776,126.7959,37.5802,126.798,37.5804,126.8009,37.5854,126.8029,37.5862,126.8013,37.5884,126.8015,37.5901,126.7997,37.593,126.7991,37.5957,126.8005,37.5983,126.802,37.5985,126.8027,37.6013,126.8039,37.6019,126.8076,37.6009,126.8181,37.5916,126.8225,37.588,126.8289,37.5856,126.853,37.5728,126.8598,37.5718]]],["양천구",[[126.8242,37.5379,126.8289,37.5391,126.8302,37.5426,126.8319,37.5415,126.8325,37.539,126.8352,37.539,126.8372,37.5349,126.8366,37.5337,126.8426,37.5237,126.851,37.5251,126.8661,37.527,126.8655,37.5338,126.8658,37.5382,126.8643,37.5417,126.8664,37.5486,126.8728,37.5449,126.8761,37.5441,126.8828,37.5451,126.8872,37.5408,126.8883,37.5408,126.8894,37.5406,126.8934,37.533,126.8936,37.5303,126.8921,37.5276,126.8906,37.5279,126.889,37.5259,126.8838,37.5235,126.8826,37.5224,126.8819,37.5194,126.8816,37.514,126.8805,37.5115,126.8756,37.5057,126.8743,37.5026,126.8711,37.502,126.868,37.5028,126.8653,37.5024,126.8645,37.5039,126.8622,37.5039,126.8602,37.5071,126.8577,37.5064,126.855,37.5078,126.8522,37.5073,126.8508,37.506,126.8473,37.5052,126.8469,37.5029,126.8421,37.5027,126.8427,37.5012,126.8385,37.4997,126.8342,37.5024,126.8312,37.5054,126.8269,37.5055,126.8261,37.5078,126.8267,37.5104,126.8253,37.5134,126.8276,37.5169,126.8274,37.52,126.8305,37.5239,126.8294,37.5268,126.8277,37.5271,126.8239,37.532,126.8242,37.5379]]],["마포구",[[126.9052,37.5741,126.9037,37.5727,126.9069,37.5706,126.9219,37.5639,126.9278,37.5625,126.9303,37.5605,126.9288,37.5582,126.9287,37.556,126.939,37.5523,126.9431,37.5536,126.9592,37.5547,126.9608,37.5539,126.9636,37.5561,126.9652,37.5536,126.9638,37.5525,126.9645,37.5487,126.966,37.5469,126.964,37.5458,126.9623,37.5435,126.9606,37.5427,126.9593,37.539,126.9534,37.5335,126.9472,37.5321,126.9457,37.5266,126.9368,37.5334,126.9313,37.5342,126.9083,37.5392,126.9028,37.5413,126.8918,37.5474,126.88,37.5551,126.8684,37.5631,126.8605,37.5668,126.8595,37.5683,126.8598,37.5718,126.8599,37.5728,126.8638,37.5731,126.8656,37.5739,126.8677,37.5727,126.8701,37.5746,126.8728,37.575,126.878,37.5768,126.8792,37.5797,126.8788,37.5813,126.8811,37.5838,126.8824,37.5868,126.8843,37.5881,126.8915,37.582,126.8953,37.5794,126.8974,37.5787,126.9002,37.5755,126.9037,37.5731,126.9052,37.5741]]],["서대문구",[[126.9525,37.6051,126.9548,37.6038,126.9556,37.6018,126.9548,37.5976,126.9562,37.5958,126.9592,37.5955,126.9584,37.5924,126.9604,37.5887,126.9605,37.5872,126.9588,37.5819,126.9618,37.5797,126.9579,37.5779,126.9557,37.5761,126.9687,37.5631,126.9717,37.5592,126.969,37.5585,126.9657,37.5565,126.9636,37.5561,126.9608,37.5539,126.9592,37.5547,126.9431,37.5536,126.939,37.5523,126.9287,37.556,126.9288,37.5582,126.9303,37.5605,126.9278,37.5625,126.9219,37.5639,126.9069,37.5706,126.9037,37.5727,126.9052,37.5741,126.9146,37.5832,126.9183,37.5828,126.9179,37.5803,126.9244,37.5812,126.926,37.5844,126.9282,37.5844,126.9302,37.5856,126.93,37.5877,126.931,37.59,126.9358,37.5936,126.9428,37.5959,126.9436,37.6003,126.9445,37.602,126.947,37.602,126.9492,37.6051,126.9525,37.6051]]],["은평구",[[126.9739,37.6295,126.9714,37.6274,126.9616,37.6257,126.9589,37.6226,126.9543,37.622,126.9539,37.6188,126.9528,37.6161,126.9515,37.6149,126.9525,37.6133,126.9531,37.6093,126.9519,37.606,126.9525,37.6051,126.9492,37.6051,126.947,37.602,126.9445,37.602,126.9436,37.6003,126.9428,37.5959,126.9358,37.5936,126.931,37.59,126.93,37.5877,126.9302,37.5856,126.9282,37.5844,126.926,37.5844,126.9244,37.5812,126.9179,37.5803,126.9183,37.5828,126.9146,37.5832,126.9052,37.5741,126.9037,37.5731,126.9002,37.5755,126.8974,37.5787,126.8953,37.5794,126.8915,37.582,126.8843,37.5881,126.8872,37.591,126.8894,37.591,126.8875,37.5883,126.8894,37.5858,126.8935,37.5857,126.8953,37.5864,126.8991,37.5858,126.9019,37.5871,126.9011,37.5899,126.904,37.5923,126.9032,37.5945,126.9036,37.5966,126.9024,37.6004,126.9042,37.601,126.904,37.6072,126.903,37.61,126.9055,37.616,126.9072,37.6165,126.9094,37.6191,126.9085,37.6212,126.9108,37.6234,126.9112,37.6256,126.9086,37.6297,126.913,37.6331,126.9123,37.6359,126.9138,37.6382,126.9146,37.6415,126.9097,37.6435,126.9104,37.6447,126.916,37.6419,126.9234,37.6428,126.9275,37.6447,126.931,37.6472,126.9366,37.6478,126.9391,37.6491,126.9425,37.6538,126.9457,37.6554,126.9494,37.6561,126.9498,37.6546,126.9533,37.6522,126.9565,37.6525,126.9589,37.6499,126.9597,37.6464,126.9622,37.6455,126.9642,37.6407,126.9665,37.6403,126.9709,37.6359,126.9709,37.6337,126.9739,37.6295]]],["노원구",[[127.1078,37.618,127.1036,37.617,127.1019,37.6153,127.0983,37.6143,127.0913,37.617,127.088,37.6175,127.0833,37.6163,127.0735,37.6128,127.0701,37.6128,127.0673,37.6114,127.0641,37.6116,127.0563,37.6174,127.0521,37.6216,127.05,37.6241,127.0436,37.6285,127.046,37.6306,127.0471,37.6341,127.0523,37.642,127.057,37.638,127.058,37.6432,127.0564,37.6481,127.0562,37.653,127.0537,37.6578,127.0534,37.6609,127.0509,37.6663,127.0512,37.6703,127.0526,37.6746,127.054,37.682,127.0529,37.6842,127.0567,37.6865,127.0589,37.6868,127.0637,37.686,127.0672,37.6871,127.0715,37.6916,127.075,37.6917,127.0795,37.6936,127.0839,37.6936,127.0864,37.6912,127.0883,37.6875,127.0971,37.6864,127.0984,37.683,127.0948,37.6788,127.0939,37.6764,127.0957,37.6738,127.0966,37.6707,127.0977,37.67,127.098,37.6674,127.0962,37.6635,127.0985,37.6591,127.0979,37.6567,127.0885,37.6527,127.095,37.6521,127.0962,37.65,127.0944,37.6471,127.0969,37.6428,127.1002,37.6423,127.1027,37.6429,127.1101,37.6419,127.1141,37.6374,127.1145,37.6324,127.1131,37.6278,127.1074,37.6241,127.1074,37.6224,127.1056,37.6201,127.1078,37.618]]],["도봉구",[[127.0529,37.6842,127.054,37.682,127.0526,37.6746,127.0512,37.6703,127.0509,37.6663,127.0534,37.6609,127.0537,37.6578,127.0562,37.653,127.0564,37.6481,127.058,37.6432,127.057,37.638,127.0523,37.642,127.0471,37.6341,127.046,37.6306,127.0436,37.6285,127.0406,37.6311,127.0391,37.634,127.0366,37.6351,127.0348,37.6388,127.0295,37.6423,127.0266,37.6447,127.0223,37.6463,127.0177,37.6463,127.0153,37.6477,127.0147,37.6494,127.016,37.6562,127.0173,37.6588,127.0178,37.6639,127.0206,37.6672,127.0187,37.6699,127.016,37.6726,127.014,37.6765,127.0107,37.6769,127.0104,37.6819,127.011,37.6844,127.0102,37.6863,127.011,37.6919,127.0141,37.6955,127.0165,37.6955,127.018,37.6983,127.0214,37.6986,127.0242,37.6968,127.027,37.6967,127.0302,37.6978,127.0313,37.6962,127.0318,37.6934,127.0333,37.6901,127.0345,37.689,127.0379,37.6894,127.0438,37.6926,127.0451,37.691,127.0477,37.6896,127.0511,37.6912,127.0529,37.6842]]],["강북구",[[127.0104,37.6819,127.0107,37.6769,127.014,37.6765,127.016,37.6726,127.0187,37.6699,127.0206,37.6672,127.0178,37.6639,127.0173,37.6588,127.016,37.6562,127.0147,37.6494,127.0153,37.6477,127.0177,37.6463,127.0223,37.6463,127.0266,37.6447,127.0295,37.6423,127.0348,37.6388,127.0366,37.6351,127.0391,37.634,127.0406,37.6311,127.0436,37.6285,127.05,37.6241,127.0521,37.6216,127.0489,37.6197,127.0461,37.6159,127.042,37.6128,127.0389,37.6097,127.0325,37.6063,127.0323,37.6095,127.0285,37.6099,127.0243,37.6085,127.0214,37.611,127.0169,37.6128,127.0128,37.6137,127.0106,37.6157,127.0096,37.6182,127.01,37.6211,127.0021,37.623,126.9987,37.6263,126.9961,37.6272,126.9953,37.6292,126.9934,37.6292,126.9877,37.6327,126.9867,37.6338,126.9883,37.6374,126.9854,37.6408,126.9871,37.6432,126.9858,37.647,126.9833,37.6495,126.9817,37.6521,126.9821,37.6538,126.9871,37.6565,126.9903,37.661,126.9949,37.6622,126.9958,37.6651,126.9962,37.6694,126.9951,37.6748,126.9938,37.6767,126.996,37.6775,127.0,37.681,127.0057,37.6823,127.0104,37.6819]]],["성북구",[[126.9772,37.6286,126.9794,37.6307,126.9836,37.6319,126.9867,37.6338,126.9877,37.6327,126.9934,37.6292,126.9953,37.6292,126.9961,37.6272,126.9987,37.6263,127.0021,37.623,127.01,37.6211,127.0096,37.6182,127.0106,37.6157,127.0128,37.6137,127.0169,37.6128,127.0214,37.611,127.0243,37.6085,127.0285,37.6099,127.0323,37.6095,127.0325,37.6063,127.0389,37.6097,127.042,37.6128,127.0461,37.6159,127.0489,37.6197,127.0521,37.6216,127.0563,37.6174,127.0641,37.6116,127.0673,37.6114,127.0701,37.6128,127.0735,37.6128,127.0738,37.604,127.0726,37.6065,127.0707,37.6065,127.0708,37.6041,127.0675,37.6027,127.0642,37.6023,127.0613,37.5982,127.0595,37.5987,127.0541,37.5972,127.0524,37.5983,127.0498,37.5935,127.0461,37.5935,127.0427,37.5924,127.0412,37.5885,127.0385,37.5871,127.0312,37.5796,127.0253,37.5752,127.024,37.5761,127.0204,37.5758,127.0185,37.579,127.0168,37.5794,127.0109,37.5777,127.0091,37.5793,127.009,37.5825,127.008,37.5841,127.0045,37.5863,127.003,37.5896,126.9977,37.5894,126.9965,37.5885,126.9935,37.5886,126.9886,37.5897,126.986,37.5911,126.9841,37.5931,126.9837,37.5964,126.987,37.5966,126.9898,37.5984,126.988,37.6043,126.9891,37.6078,126.9888,37.6119,126.9849,37.6139,126.983,37.62,126.9813,37.6218,126.9816,37.6264,126.9788,37.6261,126.9772,37.6286]]],["중랑구",[[127.0735,37.6128,127.0833,37.6163,127.088,37.6175,127.0913,37.617,127.0983,37.6143,127.1019,37.6153,127.1036,37.617,127.1078,37.618,127.1135,37.6179,127.1192,37.615,127.1188,37.6134,127.1197,37.6089,127.1188,37.6061,127.1204,37.6048,127.1201,37.6018,127.1159,37.5972,127.1162,37.5962,127.1205,37.5922,127.1199,37.5912,127.1155,37.5905,127.1126,37.5864,127.1114,37.5819,127.1036,37.581,127.1049,37.579,127.1048,37.5755,127.1032,37.5729,127.103,37.5708,127.1016,37.5697,127.0933,37.5668,127.0855,37.5686,127.0807,37.5691,127.0803,37.5752,127.0791,37.5786,127.0733,37.586,127.0715,37.5934,127.0722,37.5954,127.0746,37.5983,127.0748,37.6,127.0738,37.604,127.0735,37.6128]]],["동대문구",[[127.0253,37.5752,127.0312,37.5796,127.0385,37.5871,127.0412,37.5885,127.0427,37.5924,127.0461,37.5935,127.0498,37.5935,127.0524,37.5983,127.0541,37.5972,127.0595,37.5987,127.0613,37.5982,127.0642,37.6023,127.0675,37.6027,127.0708,37.6041,127.0707,37.6065,127.0726,37.6065,127.0738,37.604,127.0748,37.6,127.0746,37.5983,127.0722,37.5954,127.0715,37.5934,127.0733,37.586,127.0791,37.5786,127.0803,37.5752,127.0807,37.5691,127.0742,37.5572,127.0729,37.5578,127.0615,37.5594,127.0603,37.5599,127.0501,37.5676,127.0443,37.5702,127.04,37.5701,127.0348,37.5675,127.0318,37.5671,127.0255,37.5689,127.0253,37.5752]]],["광진구",[[127.0807,37.5691,127.0855,37.5686,127.0933,37.5668,127.1016,37.5697,127.103,37.5708,127.1063,37.5681,127.1055,37.5669,127.1041,37.5596,127.1033,37.5572,127.1127,37.557,127.1152,37.5575,127.116,37.5558,127.116,37.5505,127.1142,37.5447,127.1117,37.5407,127.1048,37.5312,127.1009,37.5248,127.0944,37.524,127.0864,37.5216,127.0797,37.5208,127.075,37.5209,127.0691,37.5223,127.0587,37.5263,127.069,37.5444,127.0758,37.5566,127.0742,37.5572,127.0807,37.5691]]],["성동구",[[127.0255,37.5689,127.0318,37.5671,127.0348,37.5675,127.04,37.5701,127.0443,37.5702,127.0501,37.5676,127.0603,37.5599,127.0615,37.5594,127.0729,37.5578,127.0742,37.5572,127.0758,37.5566,127.069,37.5444,127.0587,37.5263,127.0512,37.5298,127.049,37.5314,127.0481,37.5297,127.032,37.5361,127.027,37.5348,127.023,37.5323,127.0169,37.5361,127.0116,37.5368,127.0104,37.5391,127.0107,37.5412,127.0117,37.5453,127.0138,37.5457,127.0189,37.5506,127.0195,37.5532,127.0217,37.5547,127.025,37.5551,127.0258,37.5584,127.0284,37.5602,127.0288,37.5622,127.0257,37.5624,127.0255,37.5689]]],["용산구",[[127.0107,37.5412,127.0104,37.5391,127.0116,37.5368,127.0169,37.5361,127.023,37.5323,127.014,37.525,127.0102,37.522,127.0082,37.5188,127.0058,37.5169,127.0001,37.5139,126.9915,37.5099,126.9895,37.5109,126.9846,37.5107,126.9822,37.5093,126.9667,37.51,126.9595,37.5125,126.9555,37.5147,126.9525,37.5172,126.95,37.5208,126.9488,37.5242,126.9457,37.5266,126.9472,37.5321,126.9534,37.5335,126.9593,37.539,126.9606,37.5427,126.9623,37.5435,126.964,37.5458,126.966,37.5469,126.9645,37.5487,126.9678,37.5513,126.9743,37.5511,126.9786,37.5503,126.9793,37.5522,126.9826,37.5506,126.9858,37.5502,126.9875,37.5509,126.9899,37.5487,126.9924,37.5486,126.9974,37.5444,127.0006,37.5471,127.0048,37.5468,127.0063,37.5476,127.0069,37.5434,127.0094,37.541,127.0107,37.5412]]],["중구",[[127.0255,37.5689,127.0257,37.5624,127.0288,37.5622,127.0284,37.5602,127.0258,37.5584,127.025,37.5551,127.0217,37.5547,127.0195,37.5532,127.0189,37.5506,127.0138,37.5457,127.0117,37.5453,127.0107,37.5412,127.0094,37.541,127.0069,37.5434,127.0063,37.5476,127.0048,37.5468,127.0006,37.5471,126.9974,37.5444,126.9924,37.5486,126.9899,37.5487,126.9875,37.5509,126.9858,37.5502,126.9826,37.5506,126.9793,37.5522,126.9786,37.5503,126.9743,37.5511,126.9678,37.5513,126.9645,37.5487,126.9638,37.5525,126.9652,37.5536,126.9636,37.5561,126.9657,37.5565,126.969,37.5585,126.9717,37.5592,126.9687,37.5631,126.9711,37.5654,126.975,37.5664,126.9799,37.5665,126.991,37.5653,126.9988,37.5659,127.0037,37.5668,127.0179,37.567,127.0225,37.5689,127.0255,37.5689]]],["종로구",[[126.9739,37.6295,126.9772,37.6286,126.9788,37.6261,126.9816,37.6264,126.9813,37.6218,126.983,37.62,126.9849,37.6139,126.9888,37.6119,126.9891,37.6078,126.988,37.6043,126.9898,37.5984,126.987,37.5966,126.9837,37.5964,126.9841,37.5931,126.986,37.5911,126.9886,37.5897,126.9935,37.5886,126.9965,37.5885,126.9977,37.5894,127.003,37.5896,127.0045,37.5863,127.008,37.5841,127.009,37.5825,127.0091,37.5793,127.0109,37.5777,127.0168,37.5794,127.0185,37.579,127.0204,37.5758,127.024,37.5761,127.0253,37.5752,127.0255,37.5689,127.0225,37.5689,127.0179,37.567,127.0037,37.5668,126.9988,37.5659,126.991,37.5653,126.9799,37.5665,126.975,37.5664,126.9711,37.5654,126.9687,37.5631,126.9557,37.5761,126.9579,37.5779,126.9618,37.5797,126.9588,37.5819,126.9605,37.5872,126.9604,37.5887,126.9584,37.5924,126.9592,37.5955,126.9562,37.5958,126.9548,37.5976,126.9556,37.6018,126.9548,37.6038,126.9525,37.6051,126.9519,37.606,126.9531,37.6093,126.9525,37.6133,126.9515,37.6149,126.9528,37.6161,126.9539,37.6188,126.9543,37.622,126.9589,37.6226,126.9616,37.6257,126.9714,37.6274,126.9739,37.6295]]]],"kr":[["제주특별자치도",[[126.957,33.522,126.973,33.499,126.969,33.486,126.95,33.49,126.943,33.501,126.957,33.522],[126.783,33.564,126.802,33.554,126.83,33.557,126.833,33.543,126.86,33.524,126.874,33.528,126.904,33.523,126.918,33.498,126.907,33.484,126.915,33.47,126.938,33.471,126.942,33.459,126.929,33.449,126.91,33.403,126.909,33.388,126.893,33.384,126.875,33.368,126.871,33.35,126.847,33.33,126.851,33.322,126.838,33.305,126.811,33.298,126.781,33.303,126.747,33.275,126.734,33.275,126.694,33.266,126.661,33.268,126.644,33.262,126.621,33.238,126.6,33.233,126.588,33.241,126.55,33.234,126.523,33.237,126.511,33.227,126.49,33.227,126.472,33.219,126.452,33.237,126.433,33.229,126.415,33.241,126.387,33.228,126.322,33.235,126.3,33.219,126.295,33.203,126.274,33.191,126.251,33.21,126.234,33.231,126.202,33.243,126.184,33.256,126.161,33.289,126.168,33.296,126.163,33.321,126.169,33.343,126.192,33.362,126.215,33.373,126.224,33.388,126.238,33.393,126.262,33.414,126.262,33.431,126.307,33.448,126.31,33.463,126.337,33.464,126.388,33.487,126.397,33.481,126.482,33.507,126.495,33.518,126.517,33.513,126.542,33.528,126.551,33.518,126.584,33.524,126.599,33.535,126.635,33.535,126.646,33.553,126.66,33.549,126.72,33.553,126.728,33.558,126.758,33.556,126.783,33.564]]],["경상남도",[[128.239,34.648,128.268,34.643,128.279,34.616,128.245,34.62,128.226,34.633,128.239,34.648],[128.178,34.708,128.2,34.704,128.204,34.688,128.185,34.688,128.178,34.708],[128.486,34.813,128.496,34.779,128.511,34.764,128.493,34.754,128.474,34.758,128.475,34.772,128.462,34.785,128.486,34.813],[128.239,34.837,128.266,34.815,128.249,34.797,128.216,34.804,128.202,34.82,128.219,34.835,128.239,34.837],[128.198,34.857,128.213,34.849,128.198,34.826,128.184,34.824,128.169,34.839,128.173,34.851,128.198,34.857],[128.036,34.916,128.039,34.895,128.069,34.867,128.063,34.843,128.066,34.827,128.027,34.843,128.025,34.836,127.989,34.833,127.971,34.84,127.964,34.867,127.98,34.877,127.998,34.907,128.009,34.916,128.036,34.916],[127.898,34.943,127.92,34.937,127.932,34.911,127.925,34.896,127.901,34.869,127.926,34.828,127.945,34.823,127.957,34.802,127.992,34.83,128.035,34.827,128.063,34.819,128.064,34.796,128.053,34.792,128.059,34.742,128.028,34.716,128.016,34.721,127.988,34.708,127.958,34.706,127.948,34.73,127.951,34.774,127.931,34.773,127.906,34.763,127.915,34.733,127.889,34.719,127.869,34.723,127.858,34.74,127.838,34.747,127.854,34.766,127.837,34.8,127.815,34.832,127.809,34.854,127.829,34.871,127.833,34.894,127.853,34.9,127.857,34.923,127.873,34.939,127.898,34.943],[128.682,35.037,128.697,35.027,128.715,35.029,128.724,35.015,128.705,35.003,128.698,34.976,128.73,34.944,128.721,34.933,128.726,34.912,128.719,34.897,128.698,34.886,128.717,34.872,128.737,34.888,128.746,34.865,128.704,34.837,128.743,34.789,128.712,34.791,128.711,34.809,128.694,34.804,128.676,34.81,128.669,34.79,128.677,34.783,128.641,34.76,128.655,34.74,128.671,34.743,128.686,34.735,128.626,34.729,128.635,34.716,128.612,34.698,128.582,34.713,128.606,34.724,128.608,34.732,128.579,34.738,128.566,34.763,128.545,34.772,128.54,34.785,128.581,34.791,128.587,34.799,128.588,34.829,128.58,34.851,128.547,34.831,128.519,34.805,128.504,34.83,128.484,34.837,128.474,34.874,128.499,34.902,128.518,34.907,128.529,34.921,128.55,34.905,128.585,34.911,128.6,34.898,128.614,34.898,128.599,34.933,128.588,34.943,128.622,34.959,128.649,34.96,128.652,34.976,128.624,34.983,128.633,35.006,128.649,35.015,128.655,34.985,128.67,35.003,128.682,35.037],[128.373,35.608,128.384,35.604,128.434,35.62,128.449,35.635,128.487,35.632,128.507,35.636,128.511,35.672,128.529,35.679,128.54,35.648,128.539,35.621,128.561,35.612,128.587,35.583,128.609,35.577,128.66,35.595,128.694,35.591,128.706,35.575,128.727,35.578,128.763,35.565,128.789,35.563,128.803,35.585,128.836,35.594,128.856,35.594,128.875,35.618,128.914,35.635,128.94,35.632,128.984,35.605,129.006,35.617,129.023,35.612,129.028,35.598,129.022,35.581,128.998,35.566,128.973,35.558,128.997,35.526,129.025,35.522,129.109,35.492,129.112,35.477,129.142,35.446,129.163,35.432,129.18,35.429,129.199,35.436,129.222,35.406,129.205,35.385,129.196,35.358,129.177,35.348,129.151,35.361,129.13,35.342,129.114,35.306,129.091,35.3,129.076,35.287,129.062,35.292,129.052,35.277,129.015,35.27,129.0,35.231,128.926,35.213,128.886,35.211,128.873,35.199,128.884,35.179,128.868,35.164,128.846,35.155,128.796,35.155,128.804,35.139,128.834,35.126,128.844,35.104,128.825,35.096,128.804,35.086,128.781,35.099,128.735,35.089,128.705,35.102,128.691,35.147,128.665,35.127,128.637,35.146,128.616,35.142,128.596,35.169,128.588,35.207,128.567,35.181,128.603,35.13,128.605,35.101,128.625,35.087,128.639,35.065,128.606,35.052,128.58,35.048,128.562,35.066,128.564,35.08,128.536,35.109,128.521,35.094,128.491,35.104,128.47,35.094,128.464,35.068,128.443,35.069,128.43,35.052,128.414,35.059,128.383,35.046,128.391,35.032,128.447,35.048,128.45,35.067,128.485,35.061,128.474,35.038,128.505,35.011,128.481,34.989,128.465,34.984,128.441,34.991,128.442,34.959,128.434,34.954,128.436,34.929,128.423,34.892,128.434,34.874,128.453,34.912,128.471,34.884,128.458,34.874,128.454,34.843,128.425,34.83,128.444,34.824,128.444,34.8,128.438,34.776,128.428,34.762,128.409,34.759,128.392,34.787,128.379,34.792,128.381,34.812,128.341,34.825,128.361,34.837,128.378,34.823,128.38,34.849,128.396,34.861,128.377,34.878,128.366,34.867,128.324,34.881,128.301,34.899,128.31,34.906,128.358,34.906,128.349,34.93,128.336,34.941,128.302,34.933,128.303,34.909,128.285,34.901,128.268,34.91,128.272,34.931,128.243,34.941,128.198,34.934,128.206,34.921,128.199,34.909,128.205,34.891,128.179,34.892,128.124,34.901,128.079,34.92,128.057,34.925,128.032,34.953,128.054,34.975,128.041,34.998,128.052,35.013,128.028,35.03,128.01,35.021,128.019,35.005,128.018,34.989,127.991,34.986,127.985,34.975,127.963,34.985,127.95,34.974,127.934,34.99,127.93,35.01,127.905,34.967,127.906,34.955,127.877,34.944,127.839,34.947,127.787,34.937,127.767,34.97,127.78,34.985,127.789,35.014,127.774,35.026,127.771,35.047,127.742,35.059,127.74,35.075,127.721,35.079,127.697,35.1,127.697,35.127,127.624,35.185,127.621,35.234,127.612,35.259,127.598,35.265,127.58,35.306,127.594,35.308,127.623,35.329,127.625,35.341,127.612,35.363,127.642,35.402,127.664,35.414,127.669,35.445,127.647,35.447,127.638,35.459,127.639,35.475,127.655,35.483,127.628,35.522,127.626,35.531,127.593,35.551,127.59,35.562,127.613,35.582,127.615,35.604,127.63,35.615,127.622,35.639,127.63,35.66,127.641,35.667,127.647,35.695,127.663,35.707,127.664,35.756,127.703,35.786,127.722,35.794,127.748,35.84,127.774,35.836,127.79,35.849,127.811,35.851,127.833,35.867,127.843,35.864,127.854,35.887,127.89,35.912,127.887,35.89,127.895,35.884,127.918,35.889,127.933,35.875,127.935,35.853,127.953,35.858,127.973,35.848,127.988,35.854,128.0,35.835,128.014,35.826,128.034,35.833,128.053,35.826,128.073,35.838,128.126,35.819,128.124,35.801,128.131,35.786,128.155,35.783,128.166,35.76,128.189,35.751,128.204,35.72,128.204,35.681,128.182,35.671,128.166,35.67,128.166,35.65,128.187,35.655,128.203,35.641,128.238,35.638,128.246,35.653,128.263,35.64,128.281,35.649,128.308,35.652,128.357,35.639,128.373,35.608]]],["경상북도",[[129.452,35.648,129.415,35.661,129.356,35.677,129.305,35.645,129.263,35.651,129.257,35.663,129.265,35.688,129.256,35.698,129.236,35.701,129.21,35.718,129.163,35.712,129.148,35.722,129.138,35.709,129.091,35.699,129.072,35.678,129.07,35.656,129.076,35.637,129.05,35.647,129.006,35.617,128.984,35.605,128.94,35.632,128.914,35.635,128.875,35.618,128.856,35.594,128.836,35.594,128.803,35.585,128.789,35.563,128.763,35.565,128.727,35.578,128.706,35.575,128.694,35.591,128.66,35.595,128.609,35.577,128.587,35.583,128.561,35.612,128.539,35.621,128.54,35.648,128.529,35.679,128.546,35.716,128.582,35.736,128.619,35.734,128.612,35.722,128.625,35.7,128.64,35.703,128.666,35.717,128.686,35.719,128.694,35.729,128.698,35.755,128.685,35.787,128.719,35.803,128.711,35.824,128.754,35.854,128.765,35.881,128.759,35.912,128.741,35.925,128.747,35.941,128.741,35.953,128.748,35.968,128.734,35.982,128.728,36.002,128.693,36.012,128.62,36.003,128.592,35.976,128.558,35.968,128.529,35.973,128.537,35.937,128.526,35.915,128.495,35.893,128.478,35.892,128.47,35.904,128.478,35.933,128.443,35.932,128.42,35.918,128.406,35.886,128.388,35.862,128.392,35.847,128.425,35.848,128.462,35.838,128.48,35.824,128.471,35.805,128.422,35.806,128.41,35.794,128.389,35.76,128.395,35.743,128.435,35.722,128.435,35.7,128.42,35.69,128.362,35.704,128.353,35.7,128.358,35.678,128.384,35.652,128.405,35.639,128.388,35.609,128.373,35.608,128.357,35.639,128.308,35.652,128.281,35.649,128.263,35.64,128.246,35.653,128.238,35.638,128.203,35.641,128.187,35.655,128.166,35.65,128.166,35.67,128.182,35.671,128.204,35.681,128.204,35.72,128.189,35.751,128.166,35.76,128.155,35.783,128.131,35.786,128.124,35.801,128.126,35.819,128.073,35.838,128.053,35.826,128.034,35.833,128.014,35.826,128.0,35.835,127.988,35.854,127.973,35.848,127.953,35.858,127.935,35.853,127.933,35.875,127.918,35.889,127.895,35.884,127.887,35.89,127.89,35.912,127.884,35.925,127.911,35.938,127.897,35.982,127.878,35.994,127.879,36.019,127.906,36.036,127.919,36.051,127.938,36.048,127.964,36.065,127.96,36.092,127.969,36.115,127.989,36.126,127.998,36.15,127.978,36.185,127.988,36.197,128.016,36.206,128.041,36.191,128.055,36.198,128.053,36.212,128.032,36.237,128.049,36.254,128.012,36.269,127.984,36.261,127.97,36.248,127.951,36.254,127.933,36.275,127.894,36.289,127.882,36.272,127.853,36.273,127.843,36.307,127.854,36.327,127.884,36.342,127.893,36.354,127.875,36.403,127.885,36.419,127.875,36.434,127.885,36.458,127.883,36.478,127.909,36.505,127.903,36.522,127.876,36.535,127.876,36.552,127.864,36.565,127.826,36.568,127.8,36.588,127.826,36.61,127.852,36.61,127.85,36.63,127.865,36.632,127.876,36.652,127.892,36.627,127.934,36.615,127.941,36.648,127.934,36.662,127.89,36.688,127.934,36.69,127.934,36.703,127.951,36.715,127.963,36.734,127.989,36.715,128.005,36.714,128.024,36.723,128.05,36.705,128.074,36.704,128.071,36.719,128.035,36.745,128.057,36.79,128.061,36.813,128.086,36.801,128.109,36.803,128.114,36.816,128.142,36.831,128.167,36.817,128.221,36.812,128.216,36.846,128.236,36.845,128.244,36.87,128.285,36.854,128.299,36.832,128.323,36.812,128.336,36.814,128.369,36.798,128.384,36.811,128.423,36.809,128.451,36.846,128.45,36.862,128.427,36.874,128.443,36.899,128.444,36.925,128.462,36.932,128.465,36.945,128.516,36.974,128.517,36.984,128.547,36.99,128.574,37.013,128.567,37.029,128.586,37.041,128.633,37.036,128.654,37.063,128.691,37.05,128.702,37.038,128.737,37.037,128.754,37.026,128.764,37.032,128.754,37.055,128.767,37.061,128.787,37.085,128.811,37.075,128.829,37.075,128.849,37.049,128.878,37.042,128.898,37.042,128.925,37.089,128.947,37.092,128.963,37.075,128.985,37.081,129.067,37.065,129.079,37.09,129.098,37.098,129.143,37.079,129.197,37.038,129.235,37.042,129.228,37.071,129.252,37.093,129.268,37.099,129.274,37.114,129.297,37.112,129.306,37.126,129.342,37.142,129.366,37.144,129.384,37.117,129.382,37.097,129.407,37.075,129.43,37.061,129.417,37.05,129.413,37.021,129.421,37.003,129.411,36.977,129.422,36.948,129.424,36.894,129.418,36.886,129.432,36.845,129.46,36.812,129.466,36.785,129.481,36.765,129.47,36.755,129.48,36.73,129.475,36.721,129.479,36.696,129.467,36.683,129.44,36.667,129.415,36.62,129.413,36.592,129.425,36.566,129.443,36.549,129.449,36.5,129.437,36.48,129.44,36.46,129.439,36.426,129.427,36.403,129.398,36.363,129.382,36.33,129.385,36.32,129.377,36.286,129.384,36.272,129.375,36.252,129.387,36.237,129.387,36.209,129.375,36.204,129.379,36.187,129.395,36.177,129.402,36.162,129.4,36.132,129.443,36.097,129.421,36.086,129.423,36.074,129.383,36.057,129.379,36.047,129.386,36.027,129.419,36.009,129.432,35.994,129.454,35.989,129.476,36.01,129.505,36.023,129.506,36.034,129.536,36.055,129.549,36.082,129.572,36.074,129.586,36.017,129.581,36.005,129.559,35.988,129.557,35.965,129.536,35.933,129.521,35.924,129.53,35.902,129.522,35.87,129.53,35.861,129.512,35.821,129.517,35.813,129.494,35.784,129.499,35.768,129.489,35.726,129.475,35.7,129.478,35.683,129.452,35.648],[130.908,37.546,130.911,37.526,130.921,37.511,130.916,37.479,130.866,37.457,130.834,37.463,130.803,37.481,130.806,37.5,130.794,37.51,130.848,37.533,130.895,37.538,130.908,37.546]]],["전라남도",[[126.933,33.984,126.937,33.966,126.919,33.965,126.912,33.979,126.933,33.984],[127.295,34.06,127.303,34.009,127.283,34.031,127.284,34.047,127.295,34.06],[125.097,34.094,125.113,34.092,125.123,34.074,125.148,34.049,125.137,34.043,125.118,34.048,125.114,34.06,125.096,34.066,125.097,34.094],[126.551,34.176,126.565,34.167,126.586,34.167,126.579,34.141,126.55,34.123,126.527,34.118,126.507,34.134,126.517,34.167,126.542,34.179,126.551,34.176],[126.663,34.192,126.684,34.182,126.671,34.16,126.683,34.136,126.665,34.108,126.636,34.125,126.629,34.142,126.65,34.165,126.636,34.176,126.652,34.197,126.663,34.192],[126.766,34.209,126.772,34.187,126.752,34.185,126.766,34.209],[126.894,34.213,126.927,34.171,126.918,34.151,126.886,34.148,126.849,34.171,126.874,34.207,126.894,34.213],[126.57,34.231,126.598,34.224,126.617,34.213,126.627,34.2,126.612,34.193,126.619,34.177,126.589,34.169,126.562,34.176,126.55,34.186,126.567,34.216,126.57,34.231],[127.259,34.248,127.265,34.224,127.259,34.208,127.229,34.214,127.235,34.233,127.259,34.248],[126.62,34.247,126.629,34.236,126.595,34.231,126.606,34.246,126.62,34.247],[126.042,34.316,126.057,34.301,126.082,34.305,126.097,34.274,126.076,34.279,126.056,34.271,126.05,34.28,126.03,34.28,126.023,34.3,126.042,34.316],[126.988,34.337,127.017,34.329,127.005,34.311,126.974,34.298,126.959,34.31,126.959,34.326,126.988,34.337],[126.032,34.337,126.056,34.329,126.04,34.319,126.032,34.337],[126.842,34.35,126.85,34.342,126.871,34.347,126.882,34.334,126.9,34.329,126.886,34.307,126.869,34.312,126.847,34.295,126.834,34.32,126.811,34.323,126.801,34.315,126.782,34.324,126.79,34.344,126.805,34.33,126.821,34.345,126.842,34.35],[127.037,34.373,127.056,34.358,127.093,34.355,127.099,34.332,127.085,34.333,127.052,34.326,127.009,34.355,127.013,34.373,127.037,34.373],[126.687,34.399,126.703,34.395,126.734,34.373,126.731,34.359,126.751,34.318,126.773,34.31,126.762,34.289,126.734,34.284,126.72,34.294,126.696,34.289,126.679,34.311,126.651,34.33,126.641,34.379,126.65,34.39,126.687,34.399],[126.947,34.409,126.953,34.399,126.936,34.367,126.92,34.353,126.866,34.37,126.874,34.392,126.887,34.401,126.906,34.399,126.933,34.387,126.947,34.409],[127.248,34.411,127.263,34.4,127.274,34.377,127.252,34.383,127.255,34.4,127.248,34.411],[126.837,34.439,126.848,34.426,126.868,34.387,126.838,34.38,126.793,34.377,126.775,34.351,126.767,34.357,126.777,34.378,126.757,34.383,126.766,34.403,126.79,34.43,126.803,34.429,126.837,34.439],[127.05,34.454,127.068,34.448,127.077,34.426,127.069,34.401,127.038,34.421,127.034,34.446,127.05,34.454],[127.808,34.458,127.813,34.443,127.81,34.413,127.788,34.415,127.8,34.449,127.808,34.458],[127.466,34.469,127.504,34.459,127.509,34.465,127.539,34.445,127.537,34.426,127.495,34.409,127.493,34.43,127.467,34.437,127.457,34.452,127.466,34.469],[127.225,34.49,127.237,34.472,127.215,34.429,127.191,34.427,127.17,34.432,127.147,34.426,127.127,34.428,127.1,34.463,127.127,34.486,127.139,34.47,127.159,34.476,127.19,34.491,127.201,34.485,127.225,34.49],[126.061,34.494,126.074,34.478,126.043,34.454,126.041,34.478,126.061,34.494],[127.139,34.515,127.133,34.503,127.1,34.506,127.116,34.519,127.139,34.515],[127.461,34.543,127.481,34.533,127.464,34.507,127.493,34.505,127.504,34.492,127.484,34.48,127.454,34.476,127.446,34.494,127.461,34.5,127.449,34.514,127.436,34.516,127.461,34.543],[127.743,34.55,127.759,34.549,127.764,34.532,127.783,34.516,127.799,34.49,127.774,34.484,127.769,34.493,127.728,34.513,127.716,34.536,127.743,34.55],[127.661,34.582,127.682,34.566,127.662,34.55,127.642,34.572,127.661,34.582],[126.253,34.586,126.306,34.568,126.309,34.549,126.34,34.543,126.384,34.502,126.374,34.463,126.36,34.453,126.368,34.44,126.339,34.413,126.317,34.402,126.295,34.406,126.287,34.391,126.267,34.394,126.265,34.376,126.246,34.375,126.203,34.355,126.175,34.35,126.137,34.357,126.136,34.371,126.116,34.378,126.111,34.392,126.091,34.415,126.104,34.438,126.147,34.473,126.175,34.482,126.18,34.499,126.2,34.505,126.227,34.532,126.257,34.534,126.263,34.545,126.243,34.566,126.253,34.586],[127.548,34.616,127.567,34.61,127.551,34.593,127.532,34.6,127.548,34.616],[125.858,34.627,125.863,34.601,125.844,34.594,125.829,34.597,125.823,34.612,125.858,34.627],[126.07,34.632,126.085,34.611,126.105,34.603,126.113,34.586,126.098,34.571,126.104,34.552,126.088,34.551,126.082,34.538,126.05,34.526,126.048,34.562,126.067,34.558,126.082,34.575,126.065,34.606,126.05,34.605,126.051,34.626,126.07,34.632],[126.051,34.656,126.053,34.638,126.039,34.612,126.059,34.6,126.067,34.581,126.057,34.564,126.021,34.561,126.013,34.602,126.012,34.628,126.03,34.633,126.03,34.644,126.051,34.656],[126.149,34.671,126.186,34.659,126.193,34.629,126.164,34.613,126.13,34.617,126.11,34.643,126.119,34.661,126.149,34.671],[126.086,34.681,126.089,34.666,126.081,34.64,126.066,34.652,126.067,34.682,126.086,34.681],[125.397,34.694,125.373,34.663,125.362,34.672,125.397,34.694],[126.198,34.703,126.199,34.68,126.183,34.67,126.163,34.677,126.162,34.69,126.198,34.703],[125.444,34.697,125.467,34.69,125.45,34.677,125.447,34.66,125.429,34.656,125.432,34.641,125.417,34.635,125.416,34.619,125.395,34.625,125.387,34.64,125.4,34.674,125.415,34.695,125.444,34.697],[125.214,34.708,125.215,34.692,125.205,34.677,125.178,34.669,125.203,34.702,125.214,34.708],[127.751,34.731,127.788,34.714,127.793,34.699,127.779,34.678,127.797,34.658,127.803,34.627,127.794,34.608,127.808,34.587,127.788,34.582,127.752,34.589,127.712,34.62,127.727,34.634,127.726,34.653,127.75,34.667,127.76,34.686,127.76,34.709,127.751,34.731],[125.971,34.727,125.978,34.718,126.017,34.707,126.01,34.681,125.99,34.675,125.983,34.661,125.968,34.653,125.918,34.674,125.917,34.707,125.944,34.711,125.963,34.734,125.971,34.727],[126.083,34.776,126.099,34.768,126.126,34.773,126.14,34.755,126.165,34.755,126.196,34.729,126.198,34.716,126.175,34.697,126.147,34.683,126.122,34.68,126.111,34.693,126.076,34.705,126.07,34.714,126.075,34.744,126.082,34.75,126.07,34.769,126.083,34.776],[126.328,34.784,126.322,34.756,126.308,34.762,126.309,34.777,126.328,34.784],[125.999,34.802,126.001,34.757,125.979,34.749,125.944,34.75,125.953,34.731,125.944,34.718,125.921,34.711,125.896,34.723,125.891,34.762,125.911,34.773,125.938,34.773,125.969,34.788,125.976,34.8,125.999,34.802],[126.331,34.813,126.339,34.796,126.315,34.791,126.319,34.81,126.331,34.813],[126.172,34.8,126.177,34.759,126.138,34.759,126.125,34.776,126.102,34.775,126.102,34.789,126.135,34.797,126.158,34.82,126.172,34.8],[127.636,34.846,127.616,34.855,127.636,34.868,127.649,34.854,127.636,34.846],[126.117,34.88,126.14,34.872,126.153,34.842,126.116,34.823,126.122,34.8,126.103,34.794,126.095,34.808,126.06,34.846,126.084,34.856,126.105,34.848,126.117,34.88],[127.72,34.896,127.748,34.888,127.749,34.87,127.72,34.865,127.694,34.882,127.72,34.896],[126.298,34.919,126.313,34.906,126.338,34.906,126.345,34.891,126.327,34.887,126.327,34.858,126.359,34.861,126.374,34.844,126.36,34.812,126.334,34.816,126.341,34.835,126.336,34.845,126.279,34.853,126.257,34.837,126.23,34.847,126.244,34.856,126.266,34.856,126.284,34.864,126.304,34.89,126.283,34.907,126.298,34.919],[126.232,34.935,126.257,34.928,126.236,34.906,126.221,34.921,126.232,34.935],[126.065,34.933,126.094,34.92,126.106,34.898,126.098,34.872,126.087,34.861,126.052,34.85,125.999,34.862,125.991,34.874,126.016,34.91,126.033,34.906,126.042,34.916,126.06,34.917,126.065,34.933],[127.739,34.944,127.741,34.929,127.767,34.929,127.787,34.912,127.787,34.883,127.763,34.89,127.761,34.903,127.706,34.909,127.727,34.945,127.739,34.944],[127.762,34.957,127.771,34.931,127.747,34.931,127.743,34.948,127.762,34.957],[126.217,34.983,126.233,34.977,126.215,34.933,126.197,34.912,126.19,34.943,126.203,34.975,126.217,34.983],[126.251,35.004,126.264,35.003,126.273,34.973,126.251,34.977,126.251,35.004],[126.136,35.024,126.156,35.023,126.174,35.012,126.19,34.983,126.177,34.943,126.16,34.935,126.125,34.948,126.137,34.964,126.135,34.998,126.118,34.992,126.1,34.998,126.117,35.016,126.136,35.024],[126.149,35.055,126.171,35.053,126.203,35.035,126.198,35.022,126.151,35.031,126.135,35.048,126.149,35.055],[126.164,35.141,126.147,35.134,126.13,35.113,126.123,35.094,126.121,35.058,126.093,35.049,126.075,35.057,126.05,35.058,126.043,35.082,126.05,35.099,126.087,35.109,126.12,35.14,126.164,35.141],[126.023,35.361,126.042,35.34,126.018,35.339,126.023,35.361],[127.58,35.306,127.598,35.265,127.612,35.259,127.621,35.234,127.624,35.185,127.697,35.127,127.697,35.1,127.721,35.079,127.74,35.075,127.742,35.059,127.771,35.047,127.774,35.026,127.789,35.014,127.78,34.985,127.767,34.975,127.763,34.963,127.73,34.95,127.702,34.928,127.693,34.912,127.642,34.883,127.62,34.913,127.593,34.916,127.616,34.889,127.592,34.872,127.613,34.846,127.645,34.827,127.664,34.841,127.672,34.834,127.701,34.856,127.736,34.852,127.764,34.862,127.777,34.857,127.772,34.809,127.758,34.782,127.747,34.773,127.757,34.76,127.752,34.733,127.706,34.717,127.684,34.738,127.66,34.752,127.642,34.712,127.626,34.698,127.626,34.684,127.642,34.643,127.623,34.636,127.592,34.649,127.572,34.64,127.554,34.659,127.553,34.686,127.569,34.725,127.581,34.73,127.592,34.755,127.582,34.759,127.559,34.804,127.526,34.807,127.54,34.829,127.525,34.847,127.517,34.875,127.504,34.871,127.475,34.842,127.403,34.822,127.422,34.808,127.397,34.793,127.389,34.776,127.403,34.764,127.399,34.754,127.375,34.738,127.393,34.708,127.454,34.692,127.452,34.668,127.48,34.669,127.476,34.652,127.489,34.649,127.508,34.589,127.489,34.575,127.459,34.58,127.447,34.573,127.414,34.587,127.396,34.578,127.41,34.558,127.436,34.549,127.425,34.528,127.403,34.501,127.381,34.499,127.379,34.483,127.332,34.47,127.341,34.442,127.324,34.438,127.289,34.474,127.27,34.479,127.285,34.494,127.259,34.516,127.212,34.517,127.196,34.529,127.171,34.519,127.138,34.52,127.125,34.526,127.114,34.544,127.115,34.556,127.146,34.581,127.174,34.592,127.175,34.624,127.202,34.645,127.21,34.626,127.23,34.64,127.235,34.677,127.253,34.707,127.281,34.716,127.288,34.695,127.282,34.67,127.317,34.662,127.32,34.679,127.336,34.705,127.326,34.749,127.306,34.746,127.295,34.728,127.273,34.738,127.264,34.729,127.241,34.764,127.211,34.734,127.2,34.703,127.183,34.689,127.143,34.691,127.13,34.699,127.109,34.674,127.071,34.66,127.056,34.639,126.997,34.611,127.011,34.602,126.995,34.591,126.985,34.567,126.99,34.537,126.974,34.54,126.961,34.528,126.975,34.513,126.964,34.499,126.979,34.484,126.956,34.467,126.939,34.445,126.928,34.45,126.879,34.454,126.889,34.425,126.852,34.444,126.822,34.446,126.792,34.463,126.794,34.485,126.789,34.51,126.793,34.529,126.795,34.567,126.774,34.6,126.768,34.56,126.771,34.552,126.761,34.523,126.76,34.491,126.743,34.485,126.75,34.469,126.73,34.442,126.7,34.437,126.683,34.423,126.654,34.418,126.62,34.399,126.623,34.355,126.605,34.344,126.606,34.321,126.588,34.317,126.56,34.318,126.547,34.3,126.519,34.295,126.514,34.316,126.529,34.331,126.522,34.358,126.483,34.355,126.483,34.378,126.497,34.386,126.492,34.4,126.519,34.411,126.51,34.424,126.491,34.432,126.479,34.423,126.46,34.446,126.469,34.459,126.458,34.474,126.473,34.504,126.462,34.529,126.434,34.541,126.432,34.552,126.404,34.541,126.382,34.56,126.365,34.558,126.336,34.57,126.316,34.563,126.308,34.587,126.281,34.593,126.287,34.627,126.272,34.63,126.265,34.657,126.257,34.661,126.26,34.691,126.276,34.709,126.276,34.726,126.288,34.755,126.302,34.759,126.337,34.735,126.353,34.7,126.342,34.692,126.344,34.671,126.371,34.637,126.379,34.615,126.437,34.587,126.43,34.611,126.376,34.641,126.36,34.673,126.346,34.683,126.37,34.696,126.391,34.728,126.369,34.735,126.382,34.75,126.381,34.764,126.451,34.78,126.443,34.796,126.403,34.78,126.371,34.778,126.364,34.788,126.372,34.81,126.39,34.834,126.409,34.849,126.397,34.866,126.404,34.877,126.391,34.887,126.407,34.908,126.394,34.917,126.389,34.944,126.396,34.959,126.381,34.968,126.369,34.925,126.345,34.912,126.332,34.917,126.323,34.94,126.297,34.962,126.308,34.983,126.335,34.968,126.361,34.984,126.346,34.999,126.391,35.022,126.383,35.044,126.354,35.036,126.346,35.067,126.33,35.085,126.303,35.045,126.293,35.056,126.262,35.05,126.276,35.035,126.258,35.01,126.229,35.02,126.237,35.041,126.225,35.055,126.188,35.055,126.163,35.064,126.169,35.101,126.193,35.11,126.235,35.095,126.247,35.107,126.259,35.139,126.274,35.143,126.327,35.131,126.347,35.148,126.346,35.112,126.337,35.089,126.37,35.068,126.399,35.074,126.409,35.061,126.401,35.03,126.443,35.053,126.454,35.07,126.442,35.081,126.462,35.089,126.448,35.103,126.422,35.104,126.405,35.132,126.365,35.164,126.342,35.19,126.309,35.175,126.3,35.224,126.313,35.252,126.326,35.25,126.325,35.285,126.36,35.286,126.38,35.303,126.38,35.326,126.4,35.366,126.408,35.406,126.424,35.425,126.45,35.427,126.481,35.421,126.491,35.408,126.484,35.383,126.522,35.347,126.52,35.323,126.533,35.304,126.553,35.31,126.594,35.302,126.583,35.321,126.606,35.332,126.627,35.318,126.647,35.317,126.669,35.348,126.701,35.347,126.707,35.362,126.721,35.362,126.733,35.373,126.732,35.392,126.754,35.42,126.75,35.447,126.766,35.463,126.815,35.466,126.828,35.483,126.853,35.463,126.871,35.458,126.907,35.438,126.9,35.43,126.911,35.414,126.932,35.403,126.935,35.392,126.965,35.392,126.979,35.4,126.972,35.424,127.015,35.455,127.037,35.462,127.04,35.433,127.051,35.428,127.044,35.396,127.033,35.387,127.049,35.374,127.059,35.381,127.072,35.363,127.067,35.333,127.054,35.337,127.049,35.315,127.064,35.314,127.118,35.297,127.149,35.312,127.171,35.329,127.203,35.313,127.217,35.313,127.225,35.334,127.263,35.309,127.29,35.311,127.308,35.3,127.358,35.318,127.387,35.3,127.433,35.356,127.474,35.364,127.504,35.356,127.533,35.334,127.58,35.306]]],["전라북도",[[126.306,35.619,126.316,35.611,126.307,35.594,126.291,35.589,126.265,35.568,126.25,35.584,126.272,35.587,126.278,35.601,126.293,35.602,126.306,35.619],[127.64,36.065,127.657,36.053,127.662,36.036,127.687,36.059,127.699,36.053,127.708,36.03,127.733,36.029,127.79,36.011,127.803,36.024,127.856,36.036,127.879,36.019,127.878,35.994,127.897,35.982,127.911,35.938,127.884,35.925,127.89,35.912,127.854,35.887,127.843,35.864,127.833,35.867,127.811,35.851,127.79,35.849,127.774,35.836,127.748,35.84,127.722,35.794,127.703,35.786,127.664,35.756,127.663,35.707,127.647,35.695,127.641,35.667,127.63,35.66,127.622,35.639,127.63,35.615,127.615,35.604,127.613,35.582,127.59,35.562,127.593,35.551,127.626,35.531,127.628,35.522,127.655,35.483,127.639,35.475,127.638,35.459,127.647,35.447,127.669,35.445,127.664,35.414,127.642,35.402,127.612,35.363,127.625,35.341,127.623,35.329,127.594,35.308,127.58,35.306,127.533,35.334,127.504,35.356,127.474,35.364,127.433,35.356,127.387,35.3,127.358,35.318,127.308,35.3,127.29,35.311,127.263,35.309,127.225,35.334,127.217,35.313,127.203,35.313,127.171,35.329,127.149,35.312,127.118,35.297,127.064,35.314,127.049,35.315,127.054,35.337,127.067,35.333,127.072,35.363,127.059,35.381,127.049,35.374,127.033,35.387,127.044,35.396,127.051,35.428,127.04,35.433,127.037,35.462,127.015,35.455,126.972,35.424,126.979,35.4,126.965,35.392,126.935,35.392,126.932,35.403,126.911,35.414,126.9,35.43,126.907,35.438,126.871,35.458,126.853,35.463,126.828,35.483,126.815,35.466,126.766,35.463,126.75,35.447,126.754,35.42,126.732,35.392,126.733,35.373,126.721,35.362,126.707,35.362,126.701,35.347,126.669,35.348,126.647,35.317,126.627,35.318,126.606,35.332,126.583,35.321,126.594,35.302,126.553,35.31,126.533,35.304,126.52,35.323,126.522,35.347,126.484,35.383,126.491,35.408,126.481,35.421,126.45,35.427,126.431,35.435,126.444,35.451,126.485,35.516,126.521,35.531,126.544,35.524,126.564,35.538,126.605,35.54,126.618,35.554,126.619,35.567,126.65,35.567,126.667,35.552,126.674,35.578,126.638,35.59,126.619,35.582,126.577,35.587,126.543,35.585,126.53,35.576,126.494,35.583,126.47,35.601,126.467,35.631,126.486,35.653,126.502,35.654,126.535,35.684,126.563,35.696,126.573,35.692,126.604,35.717,126.629,35.745,126.625,35.786,126.645,35.795,126.701,35.796,126.73,35.791,126.772,35.775,126.779,35.798,126.735,35.816,126.701,35.837,126.694,35.849,126.733,35.864,126.79,35.862,126.801,35.871,126.803,35.891,126.786,35.899,126.772,35.886,126.738,35.889,126.727,35.883,126.701,35.891,126.678,35.892,126.67,35.88,126.617,35.883,126.612,35.914,126.617,35.94,126.597,35.945,126.53,35.937,126.523,35.968,126.571,35.973,126.645,35.976,126.669,35.981,126.682,35.996,126.727,35.992,126.737,35.998,126.751,36.021,126.777,36.029,126.812,36.031,126.832,36.044,126.866,36.058,126.877,36.089,126.875,36.11,126.894,36.138,126.925,36.136,126.959,36.153,126.992,36.142,127.006,36.146,127.026,36.134,127.052,36.139,127.063,36.091,127.084,36.075,127.136,36.067,127.139,36.084,127.171,36.081,127.181,36.091,127.202,36.083,127.207,36.097,127.248,36.092,127.254,36.11,127.275,36.105,127.297,36.11,127.308,36.123,127.341,36.128,127.357,36.105,127.362,36.087,127.363,36.05,127.377,36.031,127.403,36.005,127.428,36.023,127.447,36.004,127.458,35.981,127.47,35.985,127.49,35.975,127.508,35.977,127.536,35.989,127.542,36.009,127.54,36.03,127.594,36.022,127.603,36.009,127.62,36.005,127.633,36.038,127.621,36.039,127.626,36.064,127.64,36.065]]],["충청남도",[[126.359,36.352,126.362,36.327,126.342,36.331,126.359,36.352],[126.435,36.383,126.461,36.352,126.398,36.365,126.388,36.378,126.435,36.383],[126.343,36.402,126.341,36.376,126.325,36.385,126.343,36.402],[126.363,36.61,126.387,36.603,126.401,36.579,126.393,36.548,126.399,36.516,126.429,36.459,126.437,36.416,126.421,36.402,126.408,36.411,126.383,36.415,126.373,36.407,126.34,36.436,126.328,36.465,126.336,36.488,126.323,36.555,126.312,36.566,126.312,36.582,126.342,36.606,126.363,36.61],[126.43,37.062,126.453,37.051,126.425,37.041,126.43,37.062],[126.911,36.902,126.998,36.933,127.034,36.925,127.063,36.937,127.076,36.936,127.116,36.97,127.132,36.962,127.146,36.969,127.192,36.95,127.204,36.949,127.222,36.927,127.246,36.915,127.272,36.91,127.292,36.891,127.31,36.882,127.308,36.86,127.338,36.852,127.336,36.828,127.358,36.826,127.384,36.811,127.404,36.792,127.397,36.781,127.414,36.769,127.414,36.754,127.399,36.744,127.39,36.756,127.339,36.75,127.343,36.729,127.327,36.73,127.31,36.718,127.31,36.702,127.288,36.688,127.25,36.692,127.206,36.722,127.165,36.731,127.136,36.704,127.145,36.689,127.163,36.689,127.167,36.675,127.157,36.662,127.16,36.633,127.158,36.603,127.184,36.593,127.195,36.578,127.196,36.562,127.175,36.533,127.184,36.519,127.173,36.509,127.207,36.456,127.203,36.439,127.228,36.419,127.26,36.405,127.284,36.412,127.283,36.372,127.273,36.358,127.28,36.346,127.262,36.324,127.261,36.293,127.252,36.28,127.283,36.262,127.285,36.233,127.317,36.218,127.326,36.2,127.343,36.186,127.355,36.209,127.367,36.217,127.362,36.261,127.375,36.269,127.392,36.262,127.389,36.248,127.403,36.23,127.41,36.21,127.445,36.191,127.471,36.212,127.47,36.22,127.495,36.235,127.52,36.238,127.533,36.246,127.551,36.236,127.581,36.23,127.6,36.214,127.595,36.192,127.604,36.159,127.592,36.131,127.62,36.102,127.62,36.091,127.64,36.065,127.626,36.064,127.621,36.039,127.633,36.038,127.62,36.005,127.603,36.009,127.594,36.022,127.54,36.03,127.542,36.009,127.536,35.989,127.508,35.977,127.49,35.975,127.47,35.985,127.458,35.981,127.447,36.004,127.428,36.023,127.403,36.005,127.377,36.031,127.363,36.05,127.362,36.087,127.357,36.105,127.341,36.128,127.308,36.123,127.297,36.11,127.275,36.105,127.254,36.11,127.248,36.092,127.207,36.097,127.202,36.083,127.181,36.091,127.171,36.081,127.139,36.084,127.136,36.067,127.084,36.075,127.063,36.091,127.052,36.139,127.026,36.134,127.006,36.146,126.992,36.142,126.959,36.153,126.925,36.136,126.894,36.138,126.875,36.11,126.877,36.089,126.866,36.058,126.832,36.044,126.812,36.031,126.777,36.029,126.751,36.021,126.737,35.998,126.663,36.008,126.67,36.029,126.646,36.053,126.634,36.053,126.635,36.09,126.608,36.106,126.579,36.135,126.562,36.127,126.54,36.145,126.514,36.149,126.526,36.182,126.545,36.194,126.532,36.219,126.532,36.236,126.549,36.261,126.53,36.294,126.52,36.297,126.505,36.322,126.554,36.345,126.511,36.377,126.482,36.38,126.49,36.41,126.499,36.424,126.485,36.45,126.475,36.5,126.487,36.513,126.464,36.536,126.449,36.583,126.453,36.594,126.478,36.603,126.476,36.614,126.459,36.623,126.47,36.651,126.463,36.662,126.444,36.664,126.446,36.641,126.426,36.597,126.413,36.6,126.397,36.615,126.367,36.624,126.363,36.666,126.343,36.665,126.349,36.636,126.358,36.624,126.322,36.594,126.295,36.581,126.284,36.593,126.287,36.615,126.298,36.627,126.287,36.661,126.265,36.671,126.264,36.694,126.274,36.702,126.273,36.723,126.255,36.715,126.231,36.69,126.214,36.69,126.199,36.672,126.175,36.675,126.132,36.665,126.132,36.685,126.149,36.684,126.148,36.701,126.173,36.716,126.21,36.703,126.223,36.719,126.205,36.724,126.187,36.75,126.167,36.755,126.149,36.748,126.154,36.728,126.138,36.716,126.124,36.724,126.136,36.738,126.104,36.77,126.131,36.772,126.144,36.786,126.16,36.823,126.148,36.836,126.165,36.844,126.177,36.833,126.195,36.846,126.19,36.865,126.211,36.898,126.251,36.909,126.244,36.886,126.223,36.878,126.244,36.861,126.255,36.877,126.272,36.881,126.286,36.9,126.295,36.927,126.286,36.961,126.31,36.971,126.316,36.952,126.305,36.941,126.304,36.919,126.322,36.903,126.323,36.889,126.297,36.84,126.319,36.836,126.283,36.815,126.299,36.806,126.34,36.815,126.323,36.835,126.326,36.854,126.344,36.846,126.365,36.848,126.373,36.862,126.366,36.874,126.397,36.89,126.412,36.905,126.383,36.941,126.336,36.957,126.341,36.972,126.328,36.991,126.377,37.009,126.428,37.012,126.453,37.003,126.48,36.966,126.489,36.98,126.456,37.023,126.5,37.062,126.522,37.057,126.531,37.041,126.6,37.014,126.642,36.995,126.707,36.997,126.721,36.99,126.783,36.974,126.782,36.965,126.804,36.922,126.814,36.922,126.819,36.894,126.829,36.884,126.834,36.859,126.85,36.875,126.883,36.885,126.914,36.888,126.911,36.902]]],["충청북도",[[128.654,37.063,128.633,37.036,128.586,37.041,128.567,37.029,128.574,37.013,128.547,36.99,128.517,36.984,128.516,36.974,128.465,36.945,128.462,36.932,128.444,36.925,128.443,36.899,128.427,36.874,128.45,36.862,128.451,36.846,128.423,36.809,128.384,36.811,128.369,36.798,128.336,36.814,128.323,36.812,128.299,36.832,128.285,36.854,128.244,36.87,128.236,36.845,128.216,36.846,128.221,36.812,128.167,36.817,128.142,36.831,128.114,36.816,128.109,36.803,128.086,36.801,128.061,36.813,128.057,36.79,128.035,36.745,128.071,36.719,128.074,36.704,128.05,36.705,128.024,36.723,128.005,36.714,127.989,36.715,127.963,36.734,127.951,36.715,127.934,36.703,127.934,36.69,127.89,36.688,127.934,36.662,127.941,36.648,127.934,36.615,127.892,36.627,127.876,36.652,127.865,36.632,127.85,36.63,127.852,36.61,127.826,36.61,127.8,36.588,127.826,36.568,127.864,36.565,127.876,36.552,127.876,36.535,127.903,36.522,127.909,36.505,127.883,36.478,127.885,36.458,127.875,36.434,127.885,36.419,127.875,36.403,127.893,36.354,127.884,36.342,127.854,36.327,127.843,36.307,127.853,36.273,127.882,36.272,127.894,36.289,127.933,36.275,127.951,36.254,127.97,36.248,127.984,36.261,128.012,36.269,128.049,36.254,128.032,36.237,128.053,36.212,128.055,36.198,128.041,36.191,128.016,36.206,127.988,36.197,127.978,36.185,127.998,36.15,127.989,36.126,127.969,36.115,127.96,36.092,127.964,36.065,127.938,36.048,127.919,36.051,127.906,36.036,127.879,36.019,127.856,36.036,127.803,36.024,127.79,36.011,127.733,36.029,127.708,36.03,127.699,36.053,127.687,36.059,127.662,36.036,127.657,36.053,127.64,36.065,127.62,36.091,127.62,36.102,127.592,36.131,127.604,36.159,127.595,36.192,127.6,36.214,127.581,36.23,127.551,36.236,127.533,36.246,127.52,36.238,127.495,36.235,127.488,36.256,127.499,36.284,127.503,36.33,127.529,36.366,127.527,36.384,127.557,36.396,127.545,36.418,127.518,36.419,127.505,36.405,127.491,36.43,127.505,36.446,127.481,36.455,127.455,36.447,127.438,36.454,127.405,36.453,127.406,36.48,127.398,36.489,127.409,36.492,127.411,36.521,127.404,36.538,127.386,36.539,127.375,36.557,127.339,36.56,127.327,36.578,127.31,36.581,127.303,36.613,127.281,36.632,127.289,36.651,127.303,36.656,127.31,36.679,127.288,36.688,127.31,36.702,127.31,36.718,127.327,36.73,127.343,36.729,127.339,36.75,127.39,36.756,127.399,36.744,127.414,36.754,127.414,36.769,127.397,36.781,127.404,36.792,127.384,36.811,127.358,36.826,127.336,36.828,127.338,36.852,127.308,36.86,127.31,36.882,127.292,36.891,127.311,36.926,127.346,36.941,127.352,36.95,127.381,36.949,127.404,36.965,127.387,36.982,127.396,36.995,127.432,36.999,127.46,37.018,127.46,37.041,127.489,37.051,127.501,37.045,127.518,37.055,127.555,37.041,127.569,37.044,127.568,37.06,127.603,37.083,127.633,37.093,127.64,37.138,127.689,37.132,127.72,37.181,127.729,37.18,127.739,37.207,127.75,37.214,127.746,37.208,127.756,37.173,127.77,37.154,127.791,37.142,127.817,37.144,127.864,37.154,127.875,37.161,127.904,37.149,127.924,37.162,127.939,37.186,127.923,37.223,127.95,37.244,127.987,37.255,128.021,37.242,128.022,37.231,128.041,37.213,128.032,37.199,128.042,37.186,128.081,37.191,128.114,37.205,128.127,37.218,128.157,37.213,128.175,37.216,128.176,37.23,128.203,37.246,128.223,37.237,128.231,37.225,128.255,37.225,128.271,37.205,128.318,37.221,128.336,37.213,128.328,37.194,128.278,37.169,128.267,37.158,128.276,37.144,128.296,37.135,128.333,37.147,128.339,37.155,128.403,37.144,128.399,37.126,128.426,37.11,128.474,37.107,128.489,37.117,128.515,37.111,128.517,37.1,128.54,37.087,128.564,37.087,128.594,37.075,128.63,37.072,128.654,37.063]]],["강원도",[[129.366,37.144,129.342,37.142,129.306,37.126,129.297,37.112,129.274,37.114,129.268,37.099,129.252,37.093,129.228,37.071,129.235,37.042,129.197,37.038,129.143,37.079,129.098,37.098,129.079,37.09,129.067,37.065,128.985,37.081,128.963,37.075,128.947,37.092,128.925,37.089,128.898,37.042,128.878,37.042,128.849,37.049,128.829,37.075,128.811,37.075,128.787,37.085,128.767,37.061,128.754,37.055,128.764,37.032,128.754,37.026,128.737,37.037,128.702,37.038,128.691,37.05,128.654,37.063,128.63,37.072,128.594,37.075,128.564,37.087,128.54,37.087,128.517,37.1,128.515,37.111,128.489,37.117,128.474,37.107,128.426,37.11,128.399,37.126,128.403,37.144,128.339,37.155,128.333,37.147,128.296,37.135,128.276,37.144,128.267,37.158,128.278,37.169,128.328,37.194,128.336,37.213,128.318,37.221,128.271,37.205,128.255,37.225,128.231,37.225,128.223,37.237,128.203,37.246,128.176,37.23,128.175,37.216,128.157,37.213,128.127,37.218,128.114,37.205,128.081,37.191,128.042,37.186,128.032,37.199,128.041,37.213,128.022,37.231,128.021,37.242,127.987,37.255,127.95,37.244,127.923,37.223,127.939,37.186,127.924,37.162,127.904,37.149,127.875,37.161,127.864,37.154,127.817,37.144,127.791,37.142,127.77,37.154,127.756,37.173,127.746,37.208,127.75,37.214,127.751,37.245,127.76,37.255,127.757,37.295,127.771,37.305,127.762,37.327,127.762,37.364,127.78,37.368,127.78,37.386,127.797,37.421,127.806,37.426,127.798,37.461,127.777,37.489,127.776,37.503,127.809,37.532,127.845,37.536,127.852,37.55,127.815,37.562,127.795,37.583,127.768,37.58,127.756,37.589,127.71,37.584,127.699,37.598,127.656,37.62,127.63,37.64,127.605,37.649,127.582,37.63,127.561,37.626,127.539,37.64,127.555,37.659,127.552,37.683,127.565,37.718,127.543,37.716,127.51,37.728,127.547,37.758,127.524,37.789,127.538,37.806,127.528,37.821,127.535,37.839,127.565,37.853,127.587,37.873,127.603,37.872,127.62,37.904,127.616,37.937,127.605,37.952,127.546,37.965,127.55,37.976,127.542,37.998,127.504,37.997,127.474,38.003,127.46,38.013,127.446,38.056,127.449,38.068,127.443,38.105,127.433,38.112,127.415,38.099,127.406,38.11,127.386,38.112,127.323,38.092,127.313,38.113,127.285,38.114,127.278,38.134,127.289,38.15,127.291,38.174,127.273,38.179,127.258,38.16,127.225,38.144,127.192,38.158,127.182,38.182,127.169,38.197,127.172,38.211,127.165,38.229,127.151,38.24,127.132,38.23,127.112,38.239,127.116,38.263,127.111,38.289,127.139,38.307,127.145,38.326,127.161,38.332,127.184,38.314,127.199,38.316,127.246,38.336,127.261,38.329,127.296,38.325,127.313,38.314,127.34,38.329,127.35,38.326,127.39,38.337,127.427,38.332,127.451,38.315,127.478,38.315,127.489,38.301,127.511,38.301,127.544,38.323,127.59,38.337,127.609,38.338,127.641,38.326,127.692,38.33,127.702,38.341,127.732,38.335,127.749,38.345,127.78,38.351,127.804,38.323,127.846,38.327,127.887,38.341,127.928,38.334,127.98,38.318,128.066,38.311,128.153,38.349,128.218,38.38,128.245,38.4,128.251,38.41,128.284,38.433,128.304,38.469,128.318,38.562,128.313,38.589,128.323,38.607,128.353,38.611,128.399,38.564,128.408,38.539,128.426,38.52,128.425,38.503,128.442,38.475,128.47,38.449,128.458,38.444,128.46,38.427,128.474,38.408,128.518,38.369,128.529,38.336,128.553,38.311,128.571,38.266,128.592,38.24,128.589,38.228,128.599,38.196,128.612,38.181,128.612,38.148,128.638,38.114,128.669,38.089,128.68,38.063,128.705,38.038,128.729,38.021,128.738,38.002,128.775,37.952,128.793,37.942,128.793,37.932,128.837,37.895,128.833,37.882,128.88,37.837,128.882,37.827,128.99,37.737,129.016,37.706,129.059,37.673,129.06,37.658,129.047,37.64,129.057,37.619,129.12,37.574,129.124,37.554,129.115,37.537,129.125,37.518,129.162,37.474,129.19,37.453,129.2,37.413,129.224,37.394,129.253,37.378,129.254,37.361,129.27,37.34,129.272,37.32,129.305,37.301,129.303,37.29,129.332,37.278,129.329,37.263,129.359,37.233,129.344,37.223,129.35,37.209,129.342,37.192,129.344,37.175,129.366,37.144]]],["경기도",[[126.61,37.306,126.586,37.292,126.572,37.277,126.599,37.26,126.611,37.26,126.625,37.234,126.652,37.223,126.649,37.208,126.614,37.216,126.605,37.205,126.587,37.218,126.571,37.201,126.546,37.204,126.544,37.222,126.563,37.239,126.565,37.253,126.551,37.277,126.57,37.279,126.581,37.293,126.61,37.306],[127.75,37.214,127.739,37.207,127.729,37.18,127.72,37.181,127.689,37.132,127.64,37.138,127.633,37.093,127.603,37.083,127.568,37.06,127.569,37.044,127.555,37.041,127.518,37.055,127.501,37.045,127.489,37.051,127.46,37.041,127.46,37.018,127.432,36.999,127.396,36.995,127.387,36.982,127.404,36.965,127.381,36.949,127.352,36.95,127.346,36.941,127.311,36.926,127.292,36.891,127.272,36.91,127.246,36.915,127.222,36.927,127.204,36.949,127.192,36.95,127.146,36.969,127.132,36.962,127.116,36.97,127.076,36.936,127.063,36.937,127.034,36.925,126.998,36.933,126.911,36.902,126.907,36.923,126.889,36.933,126.866,36.93,126.864,36.946,126.848,36.957,126.827,36.984,126.826,36.993,126.8,37.005,126.791,37.026,126.753,37.026,126.75,37.046,126.763,37.065,126.772,37.1,126.761,37.108,126.771,37.125,126.797,37.126,126.807,37.149,126.792,37.172,126.78,37.162,126.749,37.163,126.73,37.136,126.691,37.113,126.675,37.135,126.685,37.146,126.663,37.159,126.668,37.206,126.679,37.221,126.667,37.234,126.689,37.26,126.736,37.248,126.759,37.252,126.791,37.242,126.792,37.264,126.828,37.286,126.806,37.293,126.775,37.287,126.728,37.299,126.725,37.311,126.695,37.331,126.691,37.346,126.703,37.352,126.739,37.393,126.755,37.42,126.771,37.425,126.78,37.448,126.77,37.469,126.744,37.484,126.747,37.511,126.762,37.514,126.77,37.551,126.773,37.546,126.824,37.538,126.831,37.524,126.816,37.49,126.824,37.473,126.842,37.473,126.87,37.491,126.905,37.431,126.928,37.446,126.942,37.433,126.965,37.438,127.006,37.464,127.013,37.453,127.039,37.454,127.038,37.438,127.054,37.426,127.068,37.426,127.1,37.456,127.12,37.459,127.149,37.474,127.163,37.497,127.142,37.506,127.165,37.542,127.181,37.544,127.184,37.558,127.176,37.577,127.103,37.557,127.104,37.581,127.12,37.602,127.11,37.642,127.094,37.647,127.097,37.686,127.084,37.694,127.052,37.685,127.018,37.698,127.01,37.682,126.995,37.675,126.982,37.652,126.987,37.634,126.977,37.629,126.949,37.656,126.915,37.642,126.903,37.61,126.904,37.592,126.878,37.577,126.853,37.573,126.823,37.588,126.808,37.601,126.796,37.579,126.746,37.591,126.727,37.589,126.701,37.615,126.659,37.635,126.638,37.625,126.63,37.604,126.611,37.601,126.575,37.585,126.556,37.607,126.552,37.624,126.531,37.65,126.537,37.664,126.525,37.674,126.529,37.7,126.521,37.71,126.528,37.735,126.53,37.746,126.517,37.764,126.538,37.769,126.557,37.766,126.569,37.753,126.612,37.75,126.641,37.776,126.664,37.787,126.676,37.828,126.662,37.836,126.693,37.864,126.674,37.884,126.679,37.895,126.668,37.918,126.675,37.953,126.693,37.941,126.716,37.937,126.747,37.949,126.742,37.97,126.765,37.982,126.782,37.98,126.798,37.991,126.832,37.99,126.825,38.009,126.834,38.031,126.856,38.029,126.875,38.016,126.883,38.036,126.895,38.049,126.895,38.072,126.869,38.078,126.852,38.092,126.83,38.076,126.824,38.085,126.798,38.079,126.787,38.096,126.75,38.125,126.772,38.152,126.828,38.195,126.875,38.22,126.897,38.202,126.928,38.201,126.955,38.208,126.967,38.195,126.986,38.209,126.977,38.231,126.993,38.234,127.028,38.255,127.072,38.268,127.111,38.289,127.116,38.263,127.112,38.239,127.132,38.23,127.151,38.24,127.165,38.229,127.172,38.211,127.169,38.197,127.182,38.182,127.192,38.158,127.225,38.144,127.258,38.16,127.273,38.179,127.291,38.174,127.289,38.15,127.278,38.134,127.285,38.114,127.313,38.113,127.323,38.092,127.386,38.112,127.406,38.11,127.415,38.099,127.433,38.112,127.443,38.105,127.449,38.068,127.446,38.056,127.46,38.013,127.474,38.003,127.504,37.997,127.542,37.998,127.55,37.976,127.546,37.965,127.605,37.952,127.616,37.937,127.62,37.904,127.603,37.872,127.587,37.873,127.565,37.853,127.535,37.839,127.528,37.821,127.538,37.806,127.524,37.789,127.547,37.758,127.51,37.728,127.543,37.716,127.565,37.718,127.552,37.683,127.555,37.659,127.539,37.64,127.561,37.626,127.582,37.63,127.605,37.649,127.63,37.64,127.656,37.62,127.699,37.598,127.71,37.584,127.756,37.589,127.768,37.58,127.795,37.583,127.815,37.562,127.852,37.55,127.845,37.536,127.809,37.532,127.776,37.503,127.777,37.489,127.798,37.461,127.806,37.426,127.797,37.421,127.78,37.386,127.78,37.368,127.762,37.364,127.762,37.327,127.771,37.305,127.757,37.295,127.76,37.255,127.751,37.245,127.75,37.214]]],["세종특별자치시",[[127.288,36.688,127.31,36.679,127.303,36.656,127.289,36.651,127.281,36.632,127.303,36.613,127.31,36.581,127.327,36.578,127.339,36.56,127.375,36.557,127.386,36.539,127.404,36.538,127.411,36.521,127.409,36.492,127.398,36.489,127.383,36.497,127.361,36.482,127.363,36.468,127.355,36.445,127.329,36.419,127.296,36.419,127.284,36.412,127.26,36.405,127.228,36.419,127.203,36.439,127.207,36.456,127.173,36.509,127.184,36.519,127.175,36.533,127.196,36.562,127.195,36.578,127.184,36.593,127.158,36.603,127.16,36.633,127.157,36.662,127.167,36.675,127.163,36.689,127.145,36.689,127.136,36.704,127.165,36.731,127.206,36.722,127.25,36.692,127.288,36.688]]],["울산광역시",[[129.452,35.648,129.444,35.628,129.465,35.601,129.467,35.583,129.455,35.569,129.461,35.556,129.448,35.519,129.442,35.483,129.387,35.472,129.352,35.445,129.367,35.439,129.365,35.408,129.348,35.373,129.361,35.353,129.325,35.343,129.307,35.326,129.282,35.338,129.286,35.36,129.268,35.383,129.22,35.376,129.205,35.385,129.222,35.406,129.199,35.436,129.18,35.429,129.163,35.432,129.142,35.446,129.112,35.477,129.109,35.492,129.025,35.522,128.997,35.526,128.973,35.558,128.998,35.566,129.022,35.581,129.028,35.598,129.023,35.612,129.006,35.617,129.05,35.647,129.076,35.637,129.07,35.656,129.072,35.678,129.091,35.699,129.138,35.709,129.148,35.722,129.163,35.712,129.21,35.718,129.236,35.701,129.256,35.698,129.265,35.688,129.257,35.663,129.263,35.651,129.305,35.645,129.356,35.677,129.415,35.661,129.452,35.648]]],["대전광역시",[[127.495,36.235,127.47,36.22,127.471,36.212,127.445,36.191,127.41,36.21,127.403,36.23,127.389,36.248,127.392,36.262,127.375,36.269,127.362,36.261,127.367,36.217,127.355,36.209,127.343,36.186,127.326,36.2,127.317,36.218,127.285,36.233,127.283,36.262,127.252,36.28,127.261,36.293,127.262,36.324,127.28,36.346,127.273,36.358,127.283,36.372,127.284,36.412,127.296,36.419,127.329,36.419,127.355,36.445,127.363,36.468,127.361,36.482,127.383,36.497,127.398,36.489,127.406,36.48,127.405,36.453,127.438,36.454,127.455,36.447,127.481,36.455,127.505,36.446,127.491,36.43,127.505,36.405,127.518,36.419,127.545,36.418,127.557,36.396,127.527,36.384,127.529,36.366,127.503,36.33,127.499,36.284,127.488,36.256,127.495,36.235]]],["광주광역시",[[126.909,35.256,126.933,35.248,126.935,35.237,126.978,35.184,127.004,35.185,127.023,35.164,127.01,35.152,127.011,35.121,126.989,35.091,126.969,35.086,126.954,35.07,126.934,35.071,126.924,35.087,126.874,35.071,126.858,35.075,126.821,35.049,126.797,35.058,126.78,35.05,126.764,35.088,126.742,35.104,126.689,35.109,126.68,35.103,126.654,35.117,126.656,35.162,126.673,35.166,126.662,35.189,126.68,35.191,126.689,35.212,126.705,35.205,126.72,35.209,126.722,35.224,126.739,35.249,126.766,35.251,126.758,35.231,126.808,35.216,126.841,35.227,126.876,35.247,126.892,35.244,126.909,35.256]]],["인천광역시",[[126.082,37.106,126.091,37.092,126.077,37.081,126.062,37.093,126.082,37.106],[126.099,37.184,126.115,37.168,126.096,37.164,126.099,37.184],[126.289,37.27,126.319,37.26,126.306,37.251,126.284,37.261,126.289,37.27],[126.11,37.27,126.121,37.255,126.147,37.236,126.163,37.233,126.144,37.211,126.119,37.206,126.115,37.219,126.093,37.227,126.092,37.244,126.11,37.27],[126.473,37.285,126.491,37.28,126.504,37.255,126.484,37.247,126.46,37.223,126.433,37.232,126.44,37.27,126.473,37.285],[126.414,37.409,126.443,37.383,126.437,37.368,126.415,37.363,126.401,37.398,126.414,37.409],[126.581,37.498,126.587,37.487,126.569,37.477,126.544,37.475,126.509,37.463,126.498,37.445,126.444,37.418,126.422,37.419,126.418,37.43,126.397,37.443,126.374,37.445,126.358,37.464,126.375,37.469,126.434,37.501,126.467,37.497,126.485,37.501,126.5,37.529,126.528,37.525,126.568,37.512,126.581,37.498],[126.463,37.542,126.476,37.535,126.469,37.508,126.434,37.523,126.463,37.542],[126.31,37.558,126.363,37.528,126.33,37.524,126.331,37.538,126.31,37.558],[126.796,37.579,126.77,37.551,126.762,37.514,126.747,37.511,126.744,37.484,126.77,37.469,126.78,37.448,126.771,37.425,126.755,37.42,126.739,37.393,126.731,37.385,126.663,37.34,126.619,37.34,126.614,37.371,126.6,37.382,126.6,37.426,126.595,37.461,126.606,37.494,126.605,37.525,126.608,37.551,126.595,37.557,126.575,37.585,126.611,37.601,126.63,37.604,126.638,37.625,126.659,37.635,126.701,37.615,126.727,37.589,126.746,37.591,126.796,37.579],[126.235,37.654,126.256,37.651,126.248,37.628,126.227,37.646,126.235,37.654],[125.718,37.677,125.712,37.663,125.685,37.651,125.685,37.678,125.718,37.677],[126.197,37.686,126.213,37.664,126.207,37.653,126.179,37.667,126.197,37.686],[126.331,37.747,126.323,37.713,126.348,37.696,126.374,37.692,126.379,37.665,126.345,37.641,126.327,37.639,126.329,37.659,126.319,37.679,126.287,37.693,126.272,37.706,126.287,37.715,126.291,37.741,126.331,37.747],[126.268,37.813,126.295,37.802,126.33,37.802,126.337,37.796,126.319,37.772,126.294,37.762,126.274,37.767,126.25,37.763,126.229,37.75,126.209,37.766,126.224,37.788,126.225,37.803,126.239,37.814,126.268,37.813],[126.528,37.735,126.521,37.71,126.529,37.7,126.525,37.674,126.537,37.664,126.531,37.65,126.533,37.636,126.549,37.602,126.526,37.594,126.518,37.577,126.503,37.587,126.482,37.581,126.475,37.595,126.438,37.59,126.406,37.591,126.38,37.607,126.374,37.63,126.407,37.648,126.389,37.687,126.354,37.703,126.345,37.718,126.344,37.746,126.357,37.756,126.351,37.789,126.374,37.803,126.396,37.823,126.439,37.828,126.467,37.802,126.51,37.781,126.514,37.761,126.528,37.735],[124.709,37.844,124.723,37.844,124.722,37.814,124.714,37.804,124.686,37.803,124.681,37.819,124.709,37.844],[124.687,37.979,124.708,37.981,124.731,37.976,124.733,37.951,124.71,37.941,124.698,37.913,124.639,37.921,124.613,37.958,124.617,37.974,124.64,37.966,124.687,37.979]]],["대구광역시",[[128.529,35.679,128.511,35.672,128.507,35.636,128.487,35.632,128.449,35.635,128.434,35.62,128.384,35.604,128.373,35.608,128.388,35.609,128.405,35.639,128.384,35.652,128.358,35.678,128.353,35.7,128.362,35.704,128.42,35.69,128.435,35.7,128.435,35.722,128.395,35.743,128.389,35.76,128.41,35.794,128.422,35.806,128.471,35.805,128.48,35.824,128.462,35.838,128.425,35.848,128.392,35.847,128.388,35.862,128.406,35.886,128.42,35.918,128.443,35.932,128.478,35.933,128.47,35.904,128.478,35.892,128.495,35.893,128.526,35.915,128.537,35.937,128.529,35.973,128.558,35.968,128.592,35.976,128.62,36.003,128.693,36.012,128.728,36.002,128.734,35.982,128.748,35.968,128.741,35.953,128.747,35.941,128.741,35.925,128.759,35.912,128.765,35.881,128.754,35.854,128.711,35.824,128.719,35.803,128.685,35.787,128.698,35.755,128.694,35.729,128.686,35.719,128.666,35.717,128.64,35.703,128.625,35.7,128.612,35.722,128.619,35.734,128.582,35.736,128.546,35.716,128.529,35.679]]],["부산광역시",[[129.307,35.326,129.268,35.316,129.263,35.278,129.245,35.261,129.256,35.244,129.236,35.211,129.227,35.183,129.201,35.175,129.196,35.158,129.139,35.151,129.123,35.131,129.13,35.107,129.125,35.097,129.097,35.096,129.069,35.105,129.068,35.12,129.052,35.12,129.043,35.105,129.071,35.093,129.082,35.068,129.098,35.057,129.085,35.047,129.037,35.082,129.025,35.059,129.004,35.045,128.984,35.045,128.969,35.03,128.953,35.075,128.923,35.083,128.914,35.076,128.837,35.077,128.852,35.049,128.852,35.03,128.838,35.01,128.808,35.017,128.814,35.037,128.799,35.051,128.823,35.058,128.833,35.07,128.825,35.096,128.844,35.104,128.834,35.126,128.804,35.139,128.796,35.155,128.846,35.155,128.868,35.164,128.884,35.179,128.873,35.199,128.886,35.211,128.926,35.213,129.0,35.231,129.015,35.27,129.052,35.277,129.062,35.292,129.076,35.287,129.091,35.3,129.114,35.306,129.13,35.342,129.151,35.361,129.177,35.348,129.196,35.358,129.205,35.385,129.22,35.376,129.268,35.383,129.286,35.36,129.282,35.338,129.307,35.326]]],["서울특별시",[[126.77,37.551,126.796,37.579,126.808,37.601,126.823,37.588,126.853,37.573,126.878,37.577,126.904,37.592,126.903,37.61,126.915,37.642,126.949,37.656,126.977,37.629,126.987,37.634,126.982,37.652,126.995,37.675,127.01,37.682,127.018,37.698,127.052,37.685,127.084,37.694,127.097,37.686,127.094,37.647,127.11,37.642,127.12,37.602,127.104,37.581,127.103,37.557,127.176,37.577,127.184,37.558,127.181,37.544,127.165,37.542,127.142,37.506,127.163,37.497,127.149,37.474,127.12,37.459,127.1,37.456,127.068,37.426,127.054,37.426,127.038,37.438,127.039,37.454,127.013,37.453,127.006,37.464,126.965,37.438,126.942,37.433,126.928,37.446,126.905,37.431,126.87,37.491,126.842,37.473,126.824,37.473,126.816,37.49,126.831,37.524,126.824,37.538,126.773,37.546,126.77,37.551]]]]};
+(() => {
+const $ = s => document.querySelector(s);
+const CATS = ["한식","중식","일식","양식","분식","아시안","카페","술집","기타"];
+const VERDICTS = {best:"또 갈래요", good:"괜찮아요", meh:"별로예요"};
+const PALETTE = ["#5B6470","#8A6A4F","#4F6F64","#6A5A7E","#7A5052","#4E6582","#77704A","#5E5E5E"];
+const S = {db:null,user:null,me:null,canWrite:true,loaded:false,places:[],reviews:[],comments:[],placeRatings:[],placeComments:[],profiles:{},
+  q:"",cat:"",drafts:{},verdict:"best",tab:"feed",open:{},sel:null};
+let pCat = "", lastView = null, dir = "fwd";
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Math.round(n).toLocaleString("ko-KR");
+const won = n => fmt(n) + "원";
+const mkId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+const norm = s => String(s||"").trim().replace(/\s+/g," ");
+const hash = s => { let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h); };
+const color = s => PALETTE[hash(s)%PALETTE.length];
+const nameOf = id => (S.profiles[id]&&S.profiles[id].name)||"친구";
+const placeOf = id => S.places.find(p=>p.id===id);
+const canDel = x => !!x&&((S.me&&x.createdBy===S.me)||S.isOwner);
+function stars(v){ const f=Math.round(v); return `<span class="stars" aria-label="5점 중 ${v.toFixed(1)}점">${"★".repeat(f)}<span class="off">${"★".repeat(5-f)}</span></span>`; }
+function ago(t){ const d=(Date.now()-t)/1000; if(d<60) return "방금"; if(d<3600) return Math.floor(d/60)+"분 전";
+  if(d<86400) return Math.floor(d/3600)+"시간 전"; if(d<86400*30) return Math.floor(d/86400)+"일 전";
+  const x=new Date(t); return `${x.getMonth()+1}월 ${x.getDate()}일`; }
+function pic(id){ const p=S.profiles[id]; return p&&p.avatarUrl?`<img class="pic" src="${esc(p.avatarUrl)}" alt="">`:`<span class="pic" style="background:${color(id||"x")}">${esc(nameOf(id).slice(0,1))}</span>`; }
+
+function parseMap(raw){
+  let u; try{ u=new URL(String(raw).trim()); }catch{ return null; }
+  if(!/^https?:$/.test(u.protocol)) return null;
+  const h=u.hostname; let s=u.href; try{ s=decodeURIComponent(u.href); }catch{}
+  const provider=/naver/.test(h)?"네이버 지도":/kakao|kko\.to/.test(h)?"카카오맵":/google|goo\.gl/.test(h)?"구글 지도":"지도";
+  let lat=null,lng=null,name="",m;
+  if((m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))||(m=s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/))){lat=+m[1];lng=+m[2];}
+  if(/google/.test(h)&&(m=s.match(/\/place\/([^/@?]+)/))) name=m[1].replace(/\+/g," ");
+  if((m=s.match(/link\/(?:map|to)\/([^,\/]+),(-?\d+\.\d+),(-?\d+\.\d+)/))){name=m[1];lat=+m[2];lng=+m[3];}
+  const q=(u.searchParams.get("q")||"").match(/^(-?\d+\.\d+),\s*(-?\d+\.\d+)$/); if(q){lat=+q[1];lng=+q[2];}
+  if(u.searchParams.get("lat")&&u.searchParams.get("lng")){lat=+u.searchParams.get("lat");lng=+u.searchParams.get("lng");}
+  const c=u.searchParams.get("c");
+  if(c&&lat==null){ const p=c.split(",").map(Number);
+    if(p.length>=2&&p[1]!==0&&isFinite(p[0])&&isFinite(p[1])){
+      if(Math.abs(p[0])<=180&&Math.abs(p[1])<=90){lng=p[0];lat=p[1];}
+      else if(Math.abs(p[0])>1000){ lng=p[0]/20037508.34*180; lat=180/Math.PI*(2*Math.atan(Math.exp(p[1]/20037508.34*Math.PI))-Math.PI/2); }
+    } }
+  if(!(isFinite(lat)&&isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180&&(lat||lng))){lat=null;lng=null;}
+  return {provider,lat,lng,name:norm(name)};
+}
+
+/* ---------- stats ---------- */
+function menuRows(rs){
+  const g={}; rs.forEach(r=>{const k=norm(r.menu)||"이름 없는 메뉴"; (g[k]=g[k]||[]).push(r);});
+  return Object.entries(g).map(([name,a])=>{const pr=a.map(r=>+r.price).filter(x=>x>0);
+    return {name,rs:a,n:a.length,price:avg(pr),last:Math.max(...a.map(r=>r.createdAt||0))};}).sort((a,b)=>b.n-a.n||b.last-a.last);
+}
+function prStats(pid){
+  const pr=S.placeRatings.filter(x=>x.placeId===pid&&+x.rating>=1&&+x.rating<=5);
+  const mine=S.me?pr.find(x=>x.createdBy===S.me):null;
+  return {rating:avg(pr.map(x=>+x.rating)),nRatings:pr.length,myRating:mine?+mine.rating:0};
+}
+function placeStats(pid){
+  const rs=S.reviews.filter(r=>r.placeId===pid);
+  const ids=new Set(rs.map(r=>r.id));
+  const cs=S.comments.filter(c=>ids.has(c.reviewId));
+  const prices=rs.map(r=>+r.price).filter(p=>p>0);
+  const ratings=cs.map(c=>+c.rating).filter(n=>n>=1&&n<=5);
+  return {rs,cs,rows:menuRows(rs),avgPrice:avg(prices),minP:prices.length?Math.min(...prices):null,maxP:prices.length?Math.max(...prices):null,
+    cRating:avg(ratings),...prStats(pid)};
+}
+
+/* ---------- real map (Seoul districts + Korean provinces, equirectangular) ---------- */
+const KX=Math.cos(37.5*Math.PI/180)*1000, KY=1000;
+const px=lng=>lng*KX, py=lat=>-lat*KY;
+let PATHS=null;
+function geoPaths(){
+  if(PATHS) return PATHS;
+  const ring=a=>{ let d=""; for(let i=0;i<a.length;i+=2) d+=(i?"L":"M")+px(a[i]).toFixed(1)+" "+py(a[i+1]).toFixed(1); return d+"Z"; };
+  const cent=rings=>{ let best=rings[0]; rings.forEach(r=>{ if(r.length>best.length) best=r; }); let sx=0,sy=0,n=best.length/2; for(let i=0;i<best.length;i+=2){sx+=best[i];sy+=best[i+1];} return [px(sx/n),py(sy/n)]; };
+  PATHS={
+    kr:GEO.kr.map(([n,rs])=>({n:n.replace(/특별자치도|특별자치시|광역시|특별시/,"").replace(/^(충청|전라|경상)(남|북)도$/,(m,a,b)=>a[0]+b).replace(/도$/,""),d:rs.map(ring).join(""),c:cent(rs)})),
+    seoul:GEO.seoul.map(([n,rs])=>({n,d:rs.map(ring).join(""),c:cent(rs)}))
+  };
+  return PATHS;
+}
+const SEOUL_BOX=[126.76,37.42,127.19,37.71];
+class GeoMap{
+  constructor(wrap,{pins,mini=false,onPin,onTap}){
+    this.wrap=wrap; this.pins=pins; this.mini=mini; this.onPin=onPin; this.onTap=onTap;
+    this.svg=wrap.querySelector("svg"); this.ptrs=new Map(); this.moved=false;
+    const P=geoPaths();
+    this.svg.innerHTML=`<g class="base">${P.kr.map(p=>`<path class="land" d="${p.d}"/>`).join("")}${P.seoul.map(p=>`<path class="gu" d="${p.d}"/>`).join("")}</g><g class="labels"></g><g class="pins"></g>`;
+    this.svg.querySelectorAll(".base path").forEach(p=>p.setAttribute("vector-effect","non-scaling-stroke"));
+    this.fit(); this.bind();
+  }
+  fit(){
+    const pts=this.pins.filter(p=>p.lat!=null);
+    let [x0,y0,x1,y1]=SEOUL_BOX;
+    if(pts.length){ x0=Math.min(...pts.map(p=>p.lng)); x1=Math.max(...pts.map(p=>p.lng)); y0=Math.min(...pts.map(p=>p.lat)); y1=Math.max(...pts.map(p=>p.lat));
+      const minSpan=this.mini?0.05:0.03; const cx=(x0+x1)/2, cy=(y0+y1)/2;
+      const sx=Math.max((x1-x0)*1.5,minSpan), sy=Math.max((y1-y0)*1.5,minSpan*0.8);
+      x0=cx-sx/2; x1=cx+sx/2; y0=cy-sy/2; y1=cy+sy/2; }
+    const r=this.svg.getBoundingClientRect(); const asp=(r.width||600)/(r.height||400);
+    let w=px(x1)-px(x0), h=py(y0)-py(y1); const cx=(px(x0)+px(x1))/2, cy=(py(y0)+py(y1))/2;
+    if(w/h<asp) w=h*asp; else h=w/asp;
+    this.vb=[cx-w/2,cy-h/2,w,h]; this.home=this.vb.slice(); this.apply();
+  }
+  apply(){
+    const [x,y,w,h]=this.vb; this.svg.setAttribute("viewBox",`${x} ${y} ${w} ${h}`);
+    const r=this.svg.getBoundingClientRect(); const u=Math.max(w/(r.width||600),h/(r.height||400)); // map units per css px
+    const P=geoPaths(); const seoulView=w<px(127.4)-px(126.6);
+    const fs=12*u;
+    this.svg.querySelector(".labels").innerHTML=(seoulView?P.seoul:P.kr).filter(p=>p.c[0]>x&&p.c[0]<x+w&&p.c[1]>y&&p.c[1]<y+h)
+      .map(p=>`<text class="maplabel" x="${p.c[0]}" y="${p.c[1]}" font-size="${fs}">${esc(p.n)}</text>`).join("");
+    const pinH=30*u, pinW=22*u;
+    this.svg.querySelector(".pins").innerHTML=this.pins.filter(p=>p.lat!=null).sort((a,b)=>b.lat-a.lat).map((p,i)=>{
+      const X=px(p.lng), Y=py(p.lat); const sel=S.sel===p.id;
+      return `<g class="pin${sel?" sel":""}" data-pin="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.name)}" style="--i:${i}">
+        <g class="head"><path d="M${X} ${Y}c0 0 ${-pinW/2} ${-pinH*.45} ${-pinW/2} ${-pinH*.68}a${pinW/2} ${pinW/2} 0 0 1 ${pinW} 0c0 ${pinH*.23} ${-pinW/2} ${pinH*.68} ${-pinW/2} ${pinH*.68}z" fill="${sel?"var(--ink)":"var(--blue)"}" stroke="var(--card)" stroke-width="${2*u}"/>
+        <circle cx="${X}" cy="${Y-pinH*.68}" r="${pinW*.2}" fill="var(--card)"/></g>
+        ${`<text class="plabel" x="${X}" y="${Y+15*u}" font-size="${12.5*u}" stroke-width="${4*u}">${esc(p.name)}</text>`}</g>`;}).join("");
+  }
+  zoom(f,cx,cy){
+    const [x,y,w,h]=this.vb; const nw=Math.min(Math.max(w*f,15),1400), k=nw/w;
+    if(cx==null){ cx=x+w/2; cy=y+h/2; }
+    this.vb=[cx-(cx-x)*k, cy-(cy-y)*k, nw, h*k]; this.wrap.classList.add("still"); this.apply();
+  }
+  toMap(e){ const r=this.svg.getBoundingClientRect(); const [x,y,w,h]=this.vb; return [x+(e.clientX-r.left)/r.width*w, y+(e.clientY-r.top)/r.height*h]; }
+  bind(){
+    const sv=this.svg;
+    sv.addEventListener("pointerdown",e=>{ sv.setPointerCapture(e.pointerId); this.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); this.moved=false; this.down={x:e.clientX,y:e.clientY,t:e.target}; });
+    sv.addEventListener("pointermove",e=>{
+      if(!this.ptrs.has(e.pointerId)) return;
+      const prev=this.ptrs.get(e.pointerId); const r=sv.getBoundingClientRect(); const s=this.vb[2]/r.width;
+      if(this.ptrs.size===1){
+        const dx=e.clientX-prev.x, dy=e.clientY-prev.y;
+        if(Math.abs(e.clientX-this.down.x)+Math.abs(e.clientY-this.down.y)>6){ this.moved=true; sv.classList.add("drag"); }
+        if(this.moved){ this.vb[0]-=dx*s; this.vb[1]-=dy*s; this.wrap.classList.add("still"); this.apply(); }
+      } else if(this.ptrs.size===2){
+        const [a,b]=[...this.ptrs.values()]; const d0=Math.hypot(a.x-b.x,a.y-b.y);
+        this.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+        const [c,d]=[...this.ptrs.values()]; const d1=Math.hypot(c.x-d.x,c.y-d.y);
+        const mid=this.toMap({clientX:(c.x+d.x)/2,clientY:(c.y+d.y)/2}); this.moved=true;
+        if(d1>0) this.zoom(d0/d1,mid[0],mid[1]); return;
+      }
+      this.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    });
+    const end=e=>{ if(!this.ptrs.has(e.pointerId)) return; this.ptrs.delete(e.pointerId); sv.classList.remove("drag");
+      if(!this.moved&&this.ptrs.size===0&&this.onTap){ const [X,Y]=this.toMap({clientX:this.down.x,clientY:this.down.y}); this.onTap(X/KX,-Y/KY); return; }
+      if(!this.moved&&this.ptrs.size===0){ const g=this.down&&this.down.t.closest&&this.down.t.closest("[data-pin]"); if(g&&this.onPin) this.onPin(g.dataset.pin); else if(this.onPin) this.onPin(null); } };
+    sv.addEventListener("pointerup",end); sv.addEventListener("pointercancel",end);
+    sv.addEventListener("wheel",e=>{ e.preventDefault(); const [mx,my]=this.toMap(e); this.zoom(Math.exp(e.deltaY*0.0015),mx,my); },{passive:false});
+    sv.addEventListener("keydown",e=>{ const g=e.target.closest&&e.target.closest("[data-pin]"); if(g&&(e.key==="Enter"||e.key===" ")){ e.preventDefault(); this.onPin&&this.onPin(g.dataset.pin); } });
+    this.wrap.querySelectorAll("[data-zoom]").forEach(b=>b.addEventListener("click",()=>{ const z=b.dataset.zoom; if(z==="in") this.zoom(.6); else if(z==="out") this.zoom(1.6); else { this.vb=this.home.slice(); this.apply(); } }));
+  }
+}
+const ctlHTML=`<div class="mapctl"><button type="button" data-zoom="in" aria-label="확대">+</button><button type="button" data-zoom="out" aria-label="축소">−</button>
+  <button type="button" data-zoom="fit" aria-label="전체 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>`;
+let liveMap=null;
+
+/* ---------- render ---------- */
+function keepInputs(fn){
+  const view=$("#view"); const a=document.activeElement;
+  const vals={}; view.querySelectorAll("input[id],textarea[id]").forEach(el=>vals[el.id]=el.value);
+  const fid=a&&view.contains(a)?a.id:null; const sel=fid&&a.selectionStart!=null?[a.selectionStart,a.selectionEnd]:null;
+  fn();
+  Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id); if(el&&el.value!==v) el.value=v;});
+  if(fid){const el=document.getElementById(fid); if(el){el.focus({preventScroll:true}); if(sel&&el.setSelectionRange) try{el.setSelectionRange(...sel);}catch{}}}
+}
+function currentPlace(){ const id=decodeURIComponent(location.hash.slice(1)); return placeOf(id); }
+function render(){
+  const place=currentPlace();
+  const key=place?"p:"+place.id:(S.loaded?"home:"+S.tab:"loading");
+  const fresh=key!==lastView;
+  const v=$("#view");
+  // keep a live map across data refreshes on the map tab (don't reset the user's pan/zoom)
+  const keepMap = !fresh && liveMap && document.contains(liveMap.svg);
+  let saved = keepMap ? liveMap.vb.slice() : null;
+  keepInputs(()=>{ v.innerHTML = place ? detailHTML(place) : S.loaded ? (S.tab==="map"?mapHTML():S.tab==="list"?listHTML():feedHTML()) : loadingHTML(); });
+  mountMap(place, saved);
+  if(fresh){
+    v.classList.remove("in-fwd","in-back","in-fade","stagger"); void v.offsetWidth;
+    if(lastView&&lastView!=="loading") v.classList.add(dir==="back"?"in-back":dir==="tab"?"in-fade":"in-fwd");
+    v.classList.add("stagger"); countUp(v); lastView=key;
+  }
+  $("#backBtn").hidden=!place; $("#logo").hidden=!!place; $("#tabs").hidden=!!place;
+  $("#openAdd").hidden=!S.canWrite;
+  $("#dock").hidden=!(S.canWrite&&S.loaded&&(place||S.places.length));
+  $("#dockBtn").textContent=place?"먹은 메뉴 기록하기":"맛집 기록 올리기";
+  paintTabs();
+}
+function paintTabs(){ const order=["feed","map","list"]; document.querySelectorAll("#tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
+  $("#tabInk").style.transform=`translateX(${order.indexOf(S.tab)*100}%)`; }
+function mountMap(place, saved){
+  const wrap=document.querySelector(".mapwrap"); liveMap=null; if(!wrap) return;
+  if(place&&place.lat==null){
+    const pk=()=>S.pick&&S.pick.pid===place.id?[{id:"pick",name:"여기",lat:S.pick.lat,lng:S.pick.lng}]:[];
+    liveMap=new GeoMap(wrap,{pins:pk(),mini:true,onTap:(lng,lat)=>{
+      S.pick={pid:place.id,lat,lng}; liveMap.pins=pk(); wrap.classList.add("still"); liveMap.apply();
+      const b=document.getElementById("pickSave"); if(b){ b.disabled=false; b.textContent="이 위치로 저장"; } }});
+    if(!saved){ liveMap.vb=liveMap.home=(()=>{ const r=liveMap.svg.getBoundingClientRect(); const asp=(r.width||600)/(r.height||300);
+      const [x0,y0,x1,y1]=SEOUL_BOX; let w=px(x1)-px(x0), h=py(y0)-py(y1); const cx=(px(x0)+px(x1))/2, cy=(py(y0)+py(y1))/2; if(w/h<asp) w=h*asp; else h=w/asp; return [cx-w/2,cy-h/2,w,h]; })(); liveMap.apply(); }
+    if(saved){ liveMap.vb=saved; wrap.classList.add("still"); liveMap.apply(); }
+    return;
+  }
+  const pins = place ? [place] : S.places;
+  liveMap=new GeoMap(wrap,{pins,mini:!!place,onPin: place ? null : id=>{ S.sel=id; render(); }});
+  if(saved){ liveMap.vb=saved; wrap.classList.add("still"); liveMap.apply(); }
+}
+function countUp(root){
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  root.querySelectorAll("[data-count]").forEach(el=>{
+    const to=+el.dataset.count, dec=+(el.dataset.dec||0); const out=x=>dec?x.toFixed(dec):fmt(x);
+    if(reduce||!isFinite(to)){ el.textContent=out(to); return; }
+    const t0=performance.now(), d=700;
+    const step=t=>{ const k=Math.min(1,(t-t0)/d), e=1-Math.pow(1-k,3); el.textContent=out(to*e); if(k<1) requestAnimationFrame(step); };
+    el.textContent=out(0); requestAnimationFrame(step);
+  });
+}
+const GRADES = {3:"이것 하나 보고 찾아갈 곳", 2:"일부러 들러도 아깝지 않은 곳", 1:"근처라면 꼭 들를 곳"};
+const PICKS = {1:"들를 만해요", 2:"찾아갈 만해요", 3:"이것 때문에 가요"};
+function rose(on, cls=""){ return `<svg class="rose ${on?"on":""} ${cls}" viewBox="0 0 24 24" aria-hidden="true"><g>${[0,60,120,180,240,300].map(a=>`<ellipse cx="12" cy="6.4" rx="3.3" ry="4.7" transform="rotate(${a} 12 12)"/>`).join("")}<circle cx="12" cy="12" r="4.2"/></g><circle class="eye" cx="12" cy="12" r="1.9"/></svg>`; }
+function roses(v, big){ if(v==null) return `<span class="roses none${big?" big":""}">평가 전</span>`;
+  const f=Math.max(1,Math.min(3,Math.round(v))); return `<span class="roses${big?" big":""}" aria-label="3개 중 ${v.toFixed(1)}개">${[1,2,3].map(n=>rose(n<=f)).join("")}</span>`; }
+const grade = v => v==null ? null : GRADES[Math.max(1,Math.min(3,Math.round(v)))];
+
+const loadingHTML=()=>`<div class="hello"><div class="eyebrow">밥집 가이드</div><h1>친구들 평가를 불러오는 중이에요</h1></div>`;
+function emptyHTML(){ return `<section class="card empty st"><h2>아직 가이드에 오른 가게가 없어요</h2><p>지도 링크 하나면 첫 가게를 올릴 수 있어요.</p>${S.canWrite?'<button class="cta" type="button" data-act="open-add">첫 가게 올리기</button>':""}</section>`; }
+function rateBox(p, s, compact){
+  if(!S.canWrite) return "";
+  return `<div class="ratebox${compact?" compact":""}" role="group" aria-label="${esc(p.name)} 평가하기">
+    ${[1,2,3].map(n=>`<button type="button" class="pick${s.myRating===n?" chosen":""}" data-pstar="${n}" data-place="${esc(p.id)}" aria-pressed="${s.myRating===n}">
+      <span class="pr">${[1,2,3].map(k=>rose(k<=n)).slice(0,n).join("")}</span><span class="pl">${PICKS[n]}</span></button>`).join("")}
+  </div>`;
+}
+
+function feedHTML(){
+  let i=0; const st=()=>`st" style="--i:${i++}`;
+  const people=new Set([...S.places,...S.reviews,...S.comments,...S.placeRatings,...S.placeComments].map(x=>x.createdBy).filter(Boolean));
+  const rated=S.places.map(p=>prStats(p.id).rating).filter(v=>v!=null);
+  let h=`<section class="hello ${st()}"><div class="eyebrow">우리끼리 만드는 맛집 가이드</div>
+    <h1><em><span class="num" data-count="${people.size}">${people.size}</span>명</em>이 고른 가게 <span class="num" data-count="${S.places.length}">${S.places.length}</span>곳</h1></section>`;
+  if(!S.places.length) return h+emptyHTML();
+  const top=[3,2,1].map(g=>S.places.filter(p=>{const r=prStats(p.id).rating; return r!=null&&Math.max(1,Math.round(r))===g;}).length);
+  h+=`<section class="card tally ${st()}">${[3,2,1].map((g,k)=>`<div class="tl"><span class="roses sm">${[1,2,3].slice(0,g).map(()=>rose(true)).join("")}</span><b class="num"><span data-count="${top[k]}">${top[k]}</span>곳</b></div>`).join("")}
+    <div class="tl"><span class="hint">평가 전</span><b class="num">${S.places.length-rated.length}곳</b></div></section>`;
+  const todo=S.canWrite&&S.me?S.places.filter(p=>!prStats(p.id).myRating).sort((a,b)=>b.createdAt-a.createdAt).slice(0,6):[];
+  if(todo.length) h+=`<h2 class="sect ${st()}">아직 내가 평가 안 한 가게</h2><div class="hscroll ${st()}">${todo.map(p=>{const s=placeStats(p.id);
+    return `<div class="tocard"><button type="button" class="tc-h" data-open="${esc(p.id)}"><span class="tc-n">${esc(p.name)}</span><span class="hint">${esc([p.area,p.category].filter(Boolean).join(" · ")||"맛집")}</span></button>${rateBox(p,s,true)}</div>`;}).join("")}</div>`;
+  h+=`<h2 class="sect ${st()}">새 소식</h2>`;
+  const items=[...S.reviews.map(r=>({t:r.createdAt,r})),...S.places.map(p=>({t:p.createdAt,p})),
+    ...S.placeRatings.map(x=>({t:x.updatedAt||0,pr:x})),...S.placeComments.map(c=>({t:c.createdAt,pc:c}))].sort((a,b)=>b.t-a.t).slice(0,60);
+  items.forEach(it=>{
+    if(it.r){ h+=postHTML(it.r,true,st()); return; }
+    const pid=it.p?it.p.id:(it.pr||it.pc).placeId; const p=placeOf(pid); if(!p) return;
+    const who=(it.p||it.pr||it.pc).createdBy;
+    const txt=it.p?`새 가게 <b>${esc(p.name)}</b>을(를) 올렸어요`:it.pr?`<b>${esc(p.name)}</b>에 <span class="roses sm">${[1,2,3].slice(0,Math.max(1,Math.min(3,+it.pr.rating))).map(()=>rose(true)).join("")}</span> 을(를) 줬어요`:`<b>${esc(p.name)}</b>에 댓글: “${esc(it.pc.text)}”`;
+    h+=`<button type="button" class="post small press ${st()}" data-open="${esc(p.id)}">${pic(who)}
+      <span class="txt"><b>${esc(nameOf(who))}</b>님이 ${txt}<br><span class="hint">${ago(it.t)}</span></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
+  });
+  return h;
+}
+function postHTML(r,showPlace,cls){
+  const p=placeOf(r.placeId); const pr=p?prStats(p.id):null;
+  const cs=S.comments.filter(c=>c.reviewId===r.id).sort((a,b)=>a.createdAt-b.createdAt);
+  const open=!!S.open[r.id]; const mine=S.me&&r.createdBy===S.me;
+  return `<article class="post ${cls||""}">
+    ${showPlace&&p?`<button type="button" class="ptag" data-open="${esc(p.id)}">${roses(pr.rating)}<span>${esc(p.name)}</span></button>`:""}
+    <div class="who">${pic(r.createdBy)}<span class="grow"><span class="nm">${esc(nameOf(r.createdBy))}${mine?' <span class="muted">(나)</span>':""}</span><span class="tm">${ago(r.createdAt)}</span></span>
+      ${VERDICTS[r.verdict]?`<span class="pill v-${esc(r.verdict)}">${esc(VERDICTS[r.verdict])}</span>`:""}
+      ${canDel(r)?`<button type="button" class="xdel" data-del-review="${esc(r.id)}" aria-label="후기 삭제" title="후기 삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>`:""}</div>
+    <div class="dish"><h3>${esc(norm(r.menu))}</h3>${+r.price>0?`<span class="price num">${won(+r.price)}</span>`:""}</div>
+    ${r.text?`<div class="rtext">${esc(r.text)}</div>`:""}
+    <div class="acts"><button type="button" class="act" data-toggle="${esc(r.id)}" aria-expanded="${open}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>댓글 <span class="num">${cs.length}</span></button></div>
+    ${open?`<div class="cmts">
+      ${cs.map(c=>`<div class="cmt"><b>${esc(nameOf(c.createdBy))}</b><span class="t">${esc(c.text||"")}</span>${canDel(c)?`<button class="link" type="button" data-del-cmt="${esc(c.id)}">삭제</button>`:""}</div>`).join("")||'<div class="hint">첫 댓글을 남겨 보세요.</div>'}
+      ${S.canWrite?`<div class="cform"><input type="text" id="c_${esc(r.id)}" maxlength="300" placeholder="댓글 달기" aria-label="댓글"><button class="sbtn" type="button" data-send="${esc(r.id)}">등록</button></div>`:""}
+    </div>`:""}
+  </article>`;
+}
+
+function mapHTML(){
+  if(!S.places.length) return emptyHTML();
+  const withPin=S.places.filter(p=>p.lat!=null).length;
+  const sel=S.sel&&placeOf(S.sel);
+  let h=`<div class="mapwrap st" style="--i:0"><svg role="img" aria-label="맛집 지도"></svg>${ctlHTML}`;
+  if(sel){ const s=placeStats(sel.id);
+    h+=`<div class="preview"><span class="mid"><div class="pv-r">${roses(s.rating)}<span class="hint">${s.nRatings?s.nRatings+"명 평가":""}</span></div><div class="t">${esc(sel.name)}</div>
+      <div class="s num">${esc([sel.area,s.rows[0]?"인기 "+s.rows[0].name:sel.category].filter(Boolean).join(" · "))}${s.avgPrice!=null?" · 평균 "+won(s.avgPrice):""}</div></span>
+      <button type="button" class="cta sm" data-open="${esc(sel.id)}">보기</button></div>`; }
+  h+=`</div><div class="maphint st" style="--i:1">핀을 누르면 가게 평가가 떠요. 드래그로 움직이고, 휠이나 두 손가락으로 확대해요.${withPin<S.places.length?` 좌표가 없는 가게 ${S.places.length-withPin}곳은 지도에 안 보여요.`:""}</div>`;
+  return h;
+}
+function listHTML(){
+  let i=0; const st=()=>`st" style="--i:${i++}`;
+  if(!S.places.length) return emptyHTML();
+  const cats=[...new Set(S.places.map(p=>p.category).filter(Boolean))];
+  let h=`<input class="search ${st()}" id="q" type="search" placeholder="가게 이름, 동네로 검색" aria-label="가게 검색" style="margin-top:8px">`;
+  if(cats.length>1) h+=`<div class="chips ${st()}">${["",...cats].map(c=>`<button type="button" class="chip" data-cat="${esc(c)}" aria-pressed="${S.cat===c}">${c?esc(c):"전체"}</button>`).join("")}</div>`;
+  const list=S.places.filter(p=>(!S.cat||p.category===S.cat)&&(!S.q||(p.name+" "+(p.area||"")).toLowerCase().includes(S.q.toLowerCase())))
+    .map(p=>({p,s:placeStats(p.id)}));
+  if(!list.length) return h+`<section class="card empty ${st()}"><h2>찾는 가게가 없어요</h2><button class="link" type="button" data-act="clear-filter">검색 지우기</button></section>`;
+  const groups=[[3,GRADES[3]],[2,GRADES[2]],[1,GRADES[1]],[0,"아직 평가 전"]];
+  groups.forEach(([g,label])=>{
+    const rows=list.filter(x=>g?x.s.rating!=null&&Math.max(1,Math.round(x.s.rating))===g:x.s.rating==null).sort((a,b)=>(b.s.rating||0)-(a.s.rating||0)||b.s.nRatings-a.s.nRatings);
+    if(!rows.length) return;
+    h+=`<div class="ghead ${st()}">${g?`<span class="roses">${[1,2,3].slice(0,g).map(()=>rose(true)).join("")}</span>`:""}<h2>${label}</h2><span class="hint num">${rows.length}곳</span></div>`;
+    h+=`<section class="card flush ${st()}">`+rows.map(({p,s})=>`<button type="button" class="row press" data-open="${esc(p.id)}">
+      <span class="mid"><div class="t">${esc(p.name)}</div><div class="s">${esc([p.area,p.category,s.rows[0]?"인기 "+s.rows[0].name:""].filter(Boolean).join(" · ")||"아직 후기 없음")}</div></span>
+      <span class="end">${s.rating!=null?`<b class="num">${s.rating.toFixed(1)}</b><span class="num">${s.nRatings}명</span>`:""}${s.avgPrice!=null?`<span class="num">${won(s.avgPrice)}</span>`:""}</span>
+    </button>`).join("")+`</section>`;
+  });
+  return h;
+}
+
+function detailHTML(p){
+  let i=0; const st=()=>`st" style="--i:${i++}`;
+  const s=placeStats(p.id); const max=s.rows[0]?s.rows[0].n:1;
+  const pcs=S.placeComments.filter(c=>c.placeId===p.id).sort((a,b)=>a.createdAt-b.createdAt);
+  let h=`<section class="dhead ${st()}"><div class="s">${esc([p.category,p.area].filter(Boolean).join(" · ")||"맛집")}</div><h1>${esc(p.name)}</h1></section>
+  <section class="card verdict ${st()}">
+    <div class="vr">${roses(s.rating,true)}</div>
+    <div class="vg">${s.rating!=null?esc(grade(s.rating)):"아직 아무도 평가하지 않았어요"}</div>
+    <div class="hint num">${s.rating!=null?`평균 <span data-count="${s.rating.toFixed(1)}" data-dec="1">${s.rating.toFixed(1)}</span> · ${s.nRatings}명 평가`:"첫 평가를 남겨 보세요"}</div>
+    ${S.canWrite?`<div class="mylbl">${s.myRating?"내 평가 · 다시 누르면 바꿀 수 있어요":"내 평가 남기기"}</div>${rateBox(p,s)}${s.myRating?`<button class="link" type="button" data-del-rate="${esc(p.id)}" style="margin-top:10px">내 평가 취소</button>`:""}`:""}
+  </section>`;
+  if(p.lat==null&&S.canWrite) h+=`<section class="card pickcard ${st()}"><div class="card-head"><h2>지도에 위치 찍기</h2></div>
+    <p class="hint" style="margin:0 0 12px">휴대폰 공유 링크에는 좌표가 없어서 핀을 못 찍었어요. 지도를 확대해서 가게가 있는 자리를 눌러 주세요.</p>
+    <div class="mapwrap pick"><svg role="img" aria-label="위치 고르기 지도"></svg>${ctlHTML}</div>
+    <button type="button" class="cta" id="pickSave" data-savepick="${esc(p.id)}" style="margin-top:12px" ${S.pick&&S.pick.pid===p.id?"":"disabled"}>${S.pick&&S.pick.pid===p.id?"이 위치로 저장":"지도를 눌러 위치를 골라 주세요"}</button></section>`;
+  if(p.lat!=null) h+=`<div class="mapwrap mini ${st()}"><svg role="img" aria-label="${esc(p.name)} 위치"></svg>${ctlHTML}</div>`;
+  if(p.mapUrl) h+=`<a class="cta soft ${st()}" href="${esc(p.mapUrl)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21s7-6 7-11.5a7 7 0 1 0-14 0C5 15 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>${esc(p.provider||"지도")}에서 길찾기</a>`;
+  h+=`<section class="card ${st()}"><div class="kpis">
+    <div class="kpi"><div class="k">평균 가격</div><div class="v num">${s.avgPrice!=null?`<span data-count="${Math.round(s.avgPrice)}">${fmt(s.avgPrice)}</span><small>원</small>`:"-"}</div></div>
+    <div class="kpi"><div class="k">메뉴 후기</div><div class="v num"><span data-count="${s.rs.length}">${s.rs.length}</span><small>개</small></div></div>
+    <div class="kpi"><div class="k">댓글</div><div class="v num"><span data-count="${pcs.length}">${pcs.length}</span><small>개</small></div></div>
+  </div>${s.minP!=null&&s.minP!==s.maxP?`<div class="hint num" style="margin-top:10px">메뉴 가격 ${won(s.minP)} ~ ${won(s.maxP)}</div>`:""}</section>`;
+  if(s.rows.length) h+=`<section class="card ${st()}"><div class="card-head"><h2>여기서 많이 먹은 메뉴</h2></div><div class="rank">${s.rows.slice(0,5).map((m,k)=>`
+    <div class="r"><span class="n">${k+1}</span><span class="name">${esc(m.name)}</span><span class="c num">${m.n}번${m.price!=null?" · "+won(m.price):""}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.max(6,m.n/max*100)}%;--i:${k}"></div></div></div>`).join("")}</div></section>`;
+  h+=`<section class="card ${st()}"><div class="card-head"><h2>댓글 ${pcs.length}</h2></div><div class="pcs">
+    ${pcs.map(c=>`<div class="pc">${pic(c.createdBy)}<div class="pcb"><div><b>${esc(nameOf(c.createdBy))}</b> <span class="hint">${ago(c.createdAt)}</span>${canDel(c)?` <button class="link" type="button" data-del-pc="${esc(c.id)}">삭제</button>`:""}</div><div class="t">${esc(c.text)}</div></div></div>`).join("")||'<div class="hint">이 가게에 대한 한마디를 처음으로 남겨 보세요.</div>'}
+    ${S.canWrite?`<div class="cform"><input type="text" id="pc_${esc(p.id)}" maxlength="300" placeholder="이 가게 어때요?" aria-label="가게 댓글"><button class="sbtn" type="button" data-pcsend="${esc(p.id)}">등록</button></div>`:""}
+  </div></section>`;
+  if(s.rs.length){ h+=`<h2 class="sect ${st()}">메뉴 후기 ${s.rs.length}</h2>`; s.rs.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(r=>{ h+=postHTML(r,false,st()); }); }
+  if(canDel(p)) h+=`<button type="button" class="danger ${st()}" data-del-place="${esc(p.id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>가게 삭제</button>`;
+  return h;
+}
+
+/* ---------- sheets & toast ---------- */
+let openSheet=null, lastFocus=null;
+function showSheet(id){
+  const sh=$(id), sc=$("#scrim"); lastFocus=document.activeElement; openSheet=sh;
+  sc.hidden=false; sh.hidden=false; void sh.offsetWidth; sc.classList.add("show"); sh.classList.add("show");
+  setTimeout(()=>{ const f=sh.querySelector("input:not([type=hidden]),select,textarea"); if(f) f.focus({preventScroll:true}); },320);
+}
+function hideSheet(){
+  if(!openSheet) return; const sh=openSheet, sc=$("#scrim"); openSheet=null;
+  sh.classList.remove("show"); sc.classList.remove("show");
+  setTimeout(()=>{ sh.hidden=true; sc.hidden=true; },380);
+  if(lastFocus&&lastFocus.focus) lastFocus.focus({preventScroll:true});
+}
+$("#scrim").addEventListener("click",hideSheet);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&openSheet) hideSheet(); });
+let toastT;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2000); }
+function note(t){ const n=$("#statusNote"); n.textContent=t||""; n.hidden=!t; }
+function writeFailed(e,errEl){
+  if(e&&e.code==="invalid_argument"&&S.canWrite===null){ S.canWrite=false; applyWriteMode(); }
+  if(e&&e.code==="no_member"){ showJoin(); return; }
+  const msg=e&&e.code==="forbidden"?"내가 올린 것만 바꾸거나 지울 수 있어요.":
+            e&&e.code==="too_big"?"내용이 너무 길어요. 조금 줄여서 다시 해 주세요.":
+            "저장하지 못했어요. 잠시 뒤에 다시 눌러 주세요.";
+  if(errEl) errEl.textContent=msg; else toast(msg);
+}
+function applyWriteMode(){
+  if(!S.canWrite){ hideSheet(); note(S.db?"지금은 보기만 할 수 있어요. 기록하려면 공유한 친구에게 참여자 권한을 받아 주세요.":"로그인하면 친구들 맛집을 보고 기록을 남길 수 있어요."); }
+  render();
+}
+async function save(col,id,data){ await S.db.collection(col).doc(id).set(data); }
+async function touch(pid){ if(!pid) return; try{ await S.db.collection("places").doc(pid).update({updatedAt:Date.now()}); }catch{} }
+
+/* add place */
+$("#pCat").innerHTML=CATS.map(c=>`<button type="button" class="chip" data-pcat="${c}" aria-pressed="false">${c}</button>`).join("");
+$("#pCat").addEventListener("click",e=>{const b=e.target.closest("[data-pcat]"); if(!b) return;
+  pCat=pCat===b.dataset.pcat?"":b.dataset.pcat; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.pcat===pCat));});
+function openAdd(){ $("#pErr").textContent=""; showSheet("#addSheet"); }
+$("#openAdd").onclick=openAdd;
+$("#pMap").addEventListener("input",()=>{
+  const v=$("#pMap").value.trim(); const info=v?parseMap(v):null; const hint=$("#pMapHint"); hint.classList.remove("ok");
+  if(!v){hint.textContent="링크를 붙여 넣으면 가게 이름과 위치를 알아서 읽어요."; return;}
+  if(!info){hint.textContent="https:// 로 시작하는 지도 링크를 붙여 주세요."; return;}
+  if(info.name&&!$("#pName").value) $("#pName").value=info.name;
+  hint.classList.add("ok");
+  hint.textContent = info.lat!=null ? `${info.provider} 위치를 찾았어요. 지도에 핀이 찍혀요.` : `${info.provider} 링크로 저장돼요. 공유 링크엔 좌표가 없어서, 등록한 뒤 지도에서 위치를 직접 찍으면 돼요.`;
+});
+$("#addSheet").addEventListener("submit",async e=>{
+  e.preventDefault(); const err=$("#pErr"); err.textContent="";
+  if(!S.db){ err.textContent="로그인한 상태에서만 등록할 수 있어요."; return; }
+  const name=norm($("#pName").value); if(!name){err.textContent="가게 이름을 적어 주세요."; $("#pName").focus(); return;}
+  const url=$("#pMap").value.trim(); const info=url?parseMap(url):null;
+  if(url&&!info){err.textContent="지도 링크는 https:// 로 시작해야 해요."; return;}
+  const id=mkId("p"); const now=Date.now();
+  $("#pSave").disabled=true;
+  try{ await save("places",id,{name,area:norm($("#pArea").value),category:pCat,mapUrl:info?url:"",provider:info?info.provider:"",
+         lat:info?info.lat:null,lng:info?info.lng:null,createdBy:S.me||"",createdAt:now,updatedAt:now});
+       $("#addSheet").reset(); pCat=""; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed","false"));
+       $("#pMapHint").textContent="링크를 붙여 넣으면 가게 이름과 위치를 알아서 읽어요."; $("#pMapHint").classList.remove("ok");
+       hideSheet(); toast("가게를 등록했어요"); dir="fwd"; location.hash=id; }
+  catch(ex){ writeFailed(ex,err); } finally{ $("#pSave").disabled=false; }
+});
+
+/* review sheet */
+function paintVerdict(){ $("#rVerdict").innerHTML=Object.entries(VERDICTS).map(([k,v])=>`<button type="button" data-verdict="${k}" aria-pressed="${S.verdict===k}">${v}</button>`).join(""); }
+paintVerdict();
+$("#rVerdict").addEventListener("click",e=>{const b=e.target.closest("[data-verdict]"); if(!b) return; S.verdict=b.dataset.verdict; paintVerdict();});
+$("#rPrice").addEventListener("input",e=>{ const d=e.target.value.replace(/[^\d]/g,"").slice(0,8); e.target.value=d?fmt(+d)+"원":""; });
+const fillMenus=pid=>{ $("#menuList").innerHTML=pid?placeStats(pid).rows.map(m=>`<option value="${esc(m.name)}">`).join(""):""; };
+$("#rPlace").addEventListener("change",e=>fillMenus(e.target.value));
+$("#dockBtn").onclick=()=>{
+  const p=currentPlace(); $("#rErr").textContent="";
+  if(!p&&!S.places.length){ openAdd(); return; }
+  $("#rPlaceField").hidden=!!p;
+  if(!p){ const list=S.places.slice().sort((a,b)=>(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt));
+    $("#rPlace").innerHTML=list.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.area?" · "+esc(x.area):""}</option>`).join(""); }
+  fillMenus(p?p.id:$("#rPlace").value); showSheet("#rSheet");
+};
+$("#rSheet").addEventListener("submit",async e=>{
+  e.preventDefault(); const err=$("#rErr"); err.textContent="";
+  const p=currentPlace()||placeOf($("#rPlace").value); if(!p){ err.textContent="가게를 골라 주세요."; return; }
+  if(!S.db){ err.textContent="로그인한 상태에서만 올릴 수 있어요."; return; }
+  const menu=norm($("#rMenu").value); if(!menu){ err.textContent="어떤 메뉴였는지 적어 주세요."; $("#rMenu").focus(); return; }
+  const pv=$("#rPrice").value.replace(/[^\d]/g,""); const price=pv?+pv:0;
+  $("#rSave").disabled=true;
+  try{ await save("reviews",mkId("r"),{placeId:p.id,menu,price,verdict:S.verdict,text:$("#rText").value.trim().slice(0,2000),createdBy:S.me||"",createdAt:Date.now()});
+       touch(p.id); $("#rSheet").reset(); S.verdict="best"; paintVerdict(); hideSheet(); toast("후기를 올렸어요"); }
+  catch(ex){ writeFailed(ex,err); } finally{ $("#rSave").disabled=false; }
+});
+
+/* tabs + view interactions */
+$("#tabs").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(!b||b.dataset.tab===S.tab) return; S.tab=b.dataset.tab; S.sel=null; dir="tab"; render(); window.scrollTo(0,0); });
+const view=$("#view");
+$("#backBtn").onclick=()=>{ dir="back"; history.pushState(null,"",location.pathname+location.search); render(); window.scrollTo(0,0); };
+view.addEventListener("input",e=>{ if(e.target.id==="q"){ S.q=e.target.value; keepInputs(()=>{view.innerHTML=listHTML();}); }});
+view.addEventListener("click",async e=>{
+  const t=e.target.closest("button,[data-open]"); if(!t||t.closest(".mapctl")) return;
+  if(t.dataset.open){ dir="fwd"; location.hash=t.dataset.open; return; }
+  if(t.dataset.act==="open-add"){ openAdd(); return; }
+  if(t.dataset.act==="clear-filter"){ S.q="";S.cat=""; const q=$("#q"); if(q) q.value=""; render(); return; }
+  if(t.dataset.cat!=null&&t.classList.contains("chip")){ S.cat=t.dataset.cat; keepInputs(()=>{view.innerHTML=listHTML();}); return; }
+  if(t.dataset.toggle){ S.open[t.dataset.toggle]=!S.open[t.dataset.toggle]; render(); return; }
+  if(t.dataset.pstar){ const n=+t.dataset.pstar, pid=t.dataset.place; if(!S.db||!S.me){ toast("로그인한 상태에서만 평가할 수 있어요"); return; }
+    t.parentElement.querySelectorAll(".pick").forEach(b=>{ const on=b===t; b.classList.toggle("chosen",on); b.setAttribute("aria-pressed",on); });
+    t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop");
+    const id=(pid+"_"+S.me).replace(/[^A-Za-z0-9_\-.~:@+]/g,"").slice(0,190);
+    try{ await save("placeRatings",id,{placeId:pid,rating:n,createdBy:S.me,updatedAt:Date.now()}); toast(`${PICKS[n]}로 평가했어요`); }
+    catch(ex){ writeFailed(ex); render(); } return; }
+  if(t.dataset.pcsend){ const pid=t.dataset.pcsend; const inp=document.getElementById("pc_"+pid); const text=norm(inp&&inp.value);
+    if(!text){ toast("댓글 내용을 적어 주세요"); inp&&inp.focus(); return; } if(!S.db){ toast("로그인한 상태에서만 댓글을 달 수 있어요"); return; }
+    t.disabled=true; inp.value="";
+    try{ await save("placeComments",mkId("pc"),{placeId:pid,text:text.slice(0,300),createdBy:S.me||"",createdAt:Date.now()}); touch(pid); toast("댓글을 달았어요"); }
+    catch(ex){ const el=document.getElementById("pc_"+pid); if(el&&!el.value) el.value=text; writeFailed(ex); } finally{ t.disabled=false; } return; }
+  if(t.dataset.star){ const rid=t.closest(".cform").dataset.review; const n=+t.dataset.star;
+    S.drafts[rid]={...(S.drafts[rid]||{}),rating:n};
+    t.parentElement.querySelectorAll("button").forEach(b=>{ const on=+b.dataset.star<=n; b.classList.toggle("on",on); b.classList.remove("pop"); if(on){ void b.offsetWidth; b.classList.add("pop"); setTimeout(()=>b.classList.remove("pop"),220);} });
+    return; }
+  if(t.dataset.send){ const rid=t.dataset.send; const inp=document.getElementById("c_"+rid); const text=norm(inp&&inp.value);
+    if(!text){ toast("댓글 내용을 적어 주세요"); inp&&inp.focus(); return; } if(!S.db){ toast("로그인한 상태에서만 댓글을 달 수 있어요"); return; }
+    const r=S.reviews.find(x=>x.id===rid); t.disabled=true; inp.value="";
+    try{ await save("comments",mkId("c"),{reviewId:rid,placeId:r?r.placeId:"",text:text.slice(0,300),createdBy:S.me||"",createdAt:Date.now()});
+         touch(r&&r.placeId); toast("댓글을 달았어요"); }
+    catch(ex){ const el=document.getElementById("c_"+rid); if(el&&!el.value) el.value=text; writeFailed(ex); } finally{ t.disabled=false; } return; }
+  const del=async(col,id)=>{ try{ await S.db.collection(col).doc(id).delete(); return true; }catch(ex){ writeFailed(ex); return false; } };
+  const arm=txt=>{ if(t.dataset.armed) return true; t.dataset.armed="1"; const old=t.innerHTML; t.classList.add("armed"); t.textContent=txt;
+    setTimeout(()=>{ if(t.isConnected&&t.dataset.armed){ delete t.dataset.armed; t.classList.remove("armed"); t.innerHTML=old; } },4000); return false; };
+  if(t.dataset.savepick){ const pid=t.dataset.savepick; if(!S.pick||S.pick.pid!==pid||!S.db) return; t.disabled=true;
+    try{ await S.db.collection("places").doc(pid).update({lat:+S.pick.lat.toFixed(6),lng:+S.pick.lng.toFixed(6),updatedAt:Date.now()}); S.pick=null; toast("위치를 저장했어요"); }
+    catch(ex){ writeFailed(ex); t.disabled=false; } return; }
+  if(t.dataset.delRate){ const id=(t.dataset.delRate+"_"+S.me).replace(/[^A-Za-z0-9_\-.~:@+]/g,"").slice(0,190);
+    if(await del("placeRatings",id)) toast("평가를 취소했어요"); return; }
+  if(t.dataset.delPlace){ const pid=t.dataset.delPlace; const rs=S.reviews.filter(r=>r.placeId===pid);
+    if(!arm(`한 번 더 누르면 후기 ${rs.length}개까지 모두 삭제돼요`)) return;
+    t.disabled=true;
+    if(await del("places",pid)){ toast("가게를 삭제했어요"); dir="back"; history.pushState(null,"",location.pathname+location.search); render(); window.scrollTo(0,0); }
+    else t.disabled=false; return; }
+  if(t.dataset.delPc){ if(arm("한 번 더 누르면 삭제")){ if(await del("placeComments",t.dataset.delPc)) toast("삭제했어요"); } return; }
+  if(t.dataset.delCmt){ if(arm("한 번 더 누르면 삭제")){ if(await del("comments",t.dataset.delCmt)) toast("삭제했어요"); } return; }
+  if(t.dataset.delReview){ if(arm("한 번 더 누르면 삭제")){ const rid=t.dataset.delReview;
+      if(await del("reviews",rid)) toast("후기를 삭제했어요"); } return; }
+});
+window.addEventListener("hashchange",()=>{ render(); window.scrollTo(0,0); });
+window.addEventListener("popstate",()=>{ dir="back"; render(); });
+let rT; window.addEventListener("resize",()=>{ clearTimeout(rT); rT=setTimeout(()=>{ if(liveMap){ liveMap.fit(); } },150); });
+
+/* ---------- data (Supabase) ---------- */
+const SB_URL="https://irnicuggserktfrzjjrb.supabase.co";
+const SB_KEY="sb_publishable_m7BvamfFK3cHxWO_-GQQJg_sdsWOhl6";
+const COLS=["places","reviews","comments","placeRatings","placeComments"];
+const ME_KEY="bapjip.me";
+function readCred(){ try{ const m=JSON.parse(localStorage.getItem(ME_KEY)||"null"); return m&&m.id&&m.secret?m:null; }catch{ return null; } }
+function writeCred(m){ try{ m?localStorage.setItem(ME_KEY,JSON.stringify(m)):localStorage.removeItem(ME_KEY); }catch{} }
+{ // account link from another device: #acct=<id>.<secret>
+  const m=location.hash.match(/^#acct=([0-9a-f-]{36})\.([0-9a-f]{64})$/i);
+  if(m){ writeCred({id:m[1].toLowerCase(),secret:m[2].toLowerCase()}); history.replaceState(null,"",location.pathname+location.search); S.acctImported=true; }
+}
+
+function makeDb(sb){
+  const store={}, subs={}; COLS.forEach(c=>{ store[c]=new Map(); subs[c]=[]; });
+  const emit=c=>{ const docs=[...store[c].entries()].map(([id,data])=>({id,data:()=>data})); subs[c].forEach(f=>f({docs})); };
+  const fail=(e)=>{ const m=String((e&&e.message)||e||""); const x=new Error(m);
+    x.code=/forbidden/.test(m)?"forbidden":/no_member/.test(m)?"no_member":/check constraint|16000/.test(m)?"too_big":"failed"; return x; };
+  const call=async(fn,args)=>{ if(!S.cred) throw fail("no_member");
+    const {error}=await sb.rpc(fn,{p_uid:S.cred.id,p_secret:S.cred.secret,...args}); if(error) throw fail(error); };
+  let started=false, loading=null;
+  const load=()=>loading||(loading=(async()=>{
+    try{
+      let all=[], from=0;
+      for(;;){ const {data,error}=await sb.from("docs").select("col,id,data").range(from,from+999); if(error) throw error;
+        all=all.concat(data); if(data.length<1000) break; from+=1000; }
+      COLS.forEach(c=>store[c].clear()); all.forEach(r=>store[r.col]&&store[r.col].set(r.id,r.data)); COLS.forEach(emit);
+      note("");
+    }catch(e){ if(!S.loaded){ S.loaded=true; render(); } note("목록을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 열어 주세요."); }
+    finally{ loading=null; }
+  })());
+  const start=()=>{ if(started) return; started=true;
+    sb.channel("docs-all").on("postgres_changes",{event:"*",schema:"public",table:"docs"},p=>{
+      if(p.eventType==="DELETE"){ const o=p.old||{}; if(store[o.col]&&store[o.col].delete(o.id)) emit(o.col); }
+      else{ const n=p.new||{}; if(store[n.col]){ store[n.col].set(n.id,n.data); emit(n.col); } }
+    }).subscribe(st=>{ if(st==="SUBSCRIBED") load(); });
+    load();
+    document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(); });
+    window.addEventListener("online",()=>load());
+  };
+  const dropLocal=(c,id)=>{ store[c].delete(id); const hit=new Set([c]);
+    const kill=(col,key)=>{ for(const [k,d] of store[col]) if(d&&d[key]===id){ store[col].delete(k); hit.add(col); } };
+    if(c==="places") ["reviews","comments","placeRatings","placeComments"].forEach(col=>kill(col,"placeId"));
+    if(c==="reviews") kill("comments","reviewId");
+    hit.forEach(emit); };
+  return { collection:c=>({
+    onSnapshot(cb){ subs[c].push(cb); start(); },
+    doc:id=>({
+      set:async data=>{ await call("doc_set",{p_col:c,p_id:id,p_data:data}); store[c].set(id,{...data,createdBy:S.me}); emit(c); },
+      update:async patch=>{ await call("doc_patch",{p_col:c,p_id:id,p_patch:patch}); const cur=store[c].get(id); if(cur){ store[c].set(id,{...cur,...patch}); emit(c); } },
+      delete:async()=>{ await call("doc_delete",{p_col:c,p_id:id}); dropLocal(c,id); }
+    })
+  })};
+}
+
+/* ---------- me / join ---------- */
+function paintJoin(){
+  const joined=!!S.cred;
+  $("#jTitle").textContent=joined?"내 이름":"친구들이 볼 이름을 정해 주세요";
+  $("#jSave").textContent=joined?"이름 바꾸기":"시작하기";
+  $("#jMore").innerHTML=joined
+    ?`홈 화면 앱이나 다른 폰에서도 같은 이름으로 쓰려면 <button type="button" class="link" id="copyAcct">내 계정 링크 복사</button>해서 거기서 열어 주세요. 링크는 나만 갖고 있어야 해요.`
+    :`다른 폰에서 쓰던 이름이 있다면, 그 폰의 '내 이름' 메뉴에서 계정 링크를 복사해 여기서 열면 돼요.`;
+  if(joined) $("#jName").value=nameOf(S.me)==="친구"?"":nameOf(S.me);
+}
+function showJoin(){ $("#jErr").textContent=""; paintJoin(); showSheet("#joinSheet"); }
+$("#meBtn").onclick=showJoin;
+$("#joinSheet").addEventListener("click",async e=>{
+  if(e.target.id!=="copyAcct") return;
+  const link=location.origin+location.pathname+"#acct="+S.cred.id+"."+S.cred.secret;
+  try{ await navigator.clipboard.writeText(link); toast("계정 링크를 복사했어요"); }
+  catch{ prompt("이 링크를 복사해 주세요",link); }
+});
+$("#joinSheet").addEventListener("submit",async e=>{
+  e.preventDefault(); const err=$("#jErr"); err.textContent="";
+  const name=norm($("#jName").value).slice(0,20); if(!name){ err.textContent="이름을 적어 주세요."; $("#jName").focus(); return; }
+  $("#jSave").disabled=true;
+  try{
+    if(S.cred){
+      const {error}=await S.sb.rpc("rename_member",{p_uid:S.cred.id,p_secret:S.cred.secret,p_name:name}); if(error) throw error;
+      S.profiles[S.me]={name}; hideSheet(); toast("이름을 바꿨어요"); render();
+    }else{
+      const {data,error}=await S.sb.rpc("join_guide",{p_name:name}); if(error) throw error;
+      S.cred={id:data.id,secret:data.secret}; writeCred(S.cred); S.me=data.id; S.profiles[S.me]={name};
+      hideSheet(); toast(`${name}님, 반가워요`); render();
+    }
+  }catch(ex){ err.textContent="저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요."; }
+  finally{ $("#jSave").disabled=false; }
+});
+// any write action before joining opens the name sheet first
+document.addEventListener("click",e=>{
+  if(S.cred) return;
+  const t=e.target.closest("#openAdd,#dockBtn,[data-act='open-add'],[data-pstar],[data-pcsend],[data-send],[data-star],[data-savepick]");
+  if(!t) return; e.preventDefault(); e.stopPropagation(); showJoin();
+},true);
+
+/* ---------- install hint ---------- */
+let deferredInstall=null;
+const standalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const iOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function paintInstall(){
+  const box=$("#install"); let off=false; try{ off=localStorage.getItem("bapjip.installOff")==="1"; }catch{}
+  if(standalone()||off||(!deferredInstall&&!iOS)){ box.hidden=true; return; }
+  box.hidden=false;
+  $("#installTxt").innerHTML=deferredInstall?"홈 화면에 앱으로 깔아 두면 바로 열 수 있어요.":"Safari 아래 <b>공유</b> 버튼을 누르고 <b>홈 화면에 추가</b>를 고르면 앱처럼 쓸 수 있어요.";
+  $("#installGo").hidden=!deferredInstall;
+}
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredInstall=e; paintInstall(); });
+window.addEventListener("appinstalled",()=>{ deferredInstall=null; paintInstall(); });
+$("#installGo").onclick=async()=>{ if(!deferredInstall) return; deferredInstall.prompt(); try{ await deferredInstall.userChoice; }catch{} deferredInstall=null; paintInstall(); };
+$("#installX").onclick=()=>{ try{ localStorage.setItem("bapjip.installOff","1"); }catch{} paintInstall(); };
+paintInstall();
+if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
+async function loadProfiles(){
+  if(!S.user) return;
+  const ids=[...new Set([...S.places,...S.reviews,...S.comments,...S.placeRatings,...S.placeComments].map(x=>x.createdBy).filter(id=>id&&!(id in S.profiles)))];
+  if(!ids.length) return;
+  ids.forEach(id=>S.profiles[id]=S.profiles[id]||null);
+  try{ const ps=await S.user.profiles(ids); Object.assign(S.profiles,ps); render(); }catch{}
+}
+render();
+(async()=>{
+  if(!window.supabase){ S.loaded=true; render(); note("앱을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 열어 주세요."); return; }
+  const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+  S.sb=sb; S.cred=readCred(); S.me=S.cred?S.cred.id:null; S.canWrite=true;
+  S.user={ profiles:async ids=>{ const {data,error}=await sb.from("members").select("id,name").in("id",ids); if(error) throw error;
+    const o={}; ids.forEach(id=>o[id]=o[id]||null); (data||[]).forEach(m=>o[m.id]={name:m.name}); return o; } };
+  const db=makeDb(sb); S.db=db;
+  if(S.me){ try{ Object.assign(S.profiles,await S.user.profiles([S.me])); }catch{} }
+  if(S.acctImported){
+    if(S.me&&S.profiles[S.me]) toast(`${S.profiles[S.me].name}님 계정으로 열었어요`);
+    else{ toast("계정 링크를 확인하지 못했어요"); writeCred(null); S.cred=null; S.me=null; }
+  }
+  const got={}; COLS.forEach(c=>got[c]=false);
+  COLS.forEach(col=>{
+    db.collection(col).onSnapshot(snap=>{
+      S[col]=snap.docs.map(d=>({id:d.id,...d.data()}));
+      got[col]=true; S.loaded=Object.values(got).every(Boolean);
+      render(); loadProfiles();
+    });
+  });
+  if(!S.cred) setTimeout(()=>{ if(!S.cred&&!openSheet) showJoin(); },700);
+})();
+})();
+</script>
+
+</body>
+</html>
