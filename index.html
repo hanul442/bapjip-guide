@@ -393,14 +393,22 @@ html{-webkit-text-size-adjust:100%}
   </div>
 </form>
 
-<form class="sheet" id="joinSheet" hidden aria-label="내 이름" role="dialog">
+<form class="sheet" id="joinSheet" hidden aria-labelledby="jTitle" role="dialog" novalidate>
   <div class="sheet-in">
     <div class="grab"></div>
-    <h2 id="jTitle">친구들이 볼 이름을 정해 주세요</h2>
-    <div class="field"><label for="jName">이름</label><input id="jName" maxlength="20" autocomplete="nickname" placeholder="예: 한서"></div>
+    <h2 id="jTitle">로그인</h2>
+    <p class="hint" id="jLede" style="margin:-4px 0 16px"></p>
+    <div id="jAuth">
+      <div class="field"><label for="jUser">아이디</label><input id="jUser" maxlength="12" autocomplete="username" autocapitalize="off" spellcheck="false"><span class="hint" id="jUserHint"></span></div>
+      <div class="field"><label for="jPass">비밀번호</label><input id="jPass" type="password" maxlength="72" autocomplete="current-password"><span class="hint" id="jPassHint"></span></div>
+    </div>
+    <div id="jMe" hidden>
+      <div class="field"><label for="jCur">지금 비밀번호</label><input id="jCur" type="password" maxlength="72" autocomplete="current-password"></div>
+      <div class="field"><label for="jNew">새 비밀번호</label><input id="jNew" type="password" maxlength="72" autocomplete="new-password"><span class="hint">6자 이상</span></div>
+    </div>
     <span class="err" id="jErr"></span>
-    <button class="cta" type="submit" id="jSave">시작하기</button>
-    <p class="hint" id="jMore" style="margin:14px 0 0"></p>
+    <button class="cta" type="submit" id="jSave">로그인</button>
+    <p class="hint" id="jSwitch" style="margin:14px 0 0;text-align:center"></p>
   </div>
 </form>
 
@@ -959,38 +967,50 @@ function makeDb(sb){
   })};
 }
 
-/* ---------- me / join ---------- */
+/* ---------- account: sign up, log in, password, log out ---------- */
+let authMode="login";
+const AUTH_ERR={INVALID_USERNAME:"아이디는 한글, 영문, 숫자로 2~12자예요.",INVALID_PASSWORD:"비밀번호는 6자 이상으로 정해 주세요.",
+  USERNAME_TAKEN:"이미 있는 아이디예요. 다른 걸로 정해 주세요.",BAD_CREDENTIALS:"아이디나 비밀번호가 맞지 않아요."};
+const authMsg=e=>{ const m=String((e&&e.message)||""); const k=Object.keys(AUTH_ERR).find(k=>m.includes(k)); return k?AUTH_ERR[k]:"연결이 안 됐어요. 인터넷을 확인하고 다시 눌러 주세요."; };
 function paintJoin(){
-  const joined=!!S.cred;
-  $("#jTitle").textContent=joined?"내 이름":"친구들이 볼 이름을 정해 주세요";
-  $("#jSave").textContent=joined?"이름 바꾸기":"시작하기";
-  $("#jMore").innerHTML=joined
-    ?`홈 화면 앱이나 다른 폰에서도 같은 이름으로 쓰려면 <button type="button" class="link" id="copyAcct">내 계정 링크 복사</button>해서 거기서 열어 주세요. 링크는 나만 갖고 있어야 해요.`
-    :`다른 폰에서 쓰던 이름이 있다면, 그 폰의 '내 이름' 메뉴에서 계정 링크를 복사해 여기서 열면 돼요.`;
-  if(joined) $("#jName").value=nameOf(S.me)==="친구"?"":nameOf(S.me);
+  const me=!!S.cred, signup=authMode==="signup";
+  $("#jAuth").hidden=me; $("#jMe").hidden=!me;
+  $("#jTitle").textContent=me?`${nameOf(S.me)}님 계정`:signup?"새 계정 만들기":"로그인";
+  $("#jLede").textContent=me?"비밀번호를 바꾸거나 로그아웃할 수 있어요.":signup?"아이디가 친구들에게 보이는 이름이 돼요. 어느 폰에서든 이 계정으로 들어오면 돼요.":"내 계정으로 들어가서 맛집을 기록해요.";
+  $("#jUserHint").textContent=signup?"한글, 영문, 숫자 2~12자":"";
+  $("#jPassHint").textContent=signup?"6자 이상":"";
+  $("#jPass").autocomplete=signup?"new-password":"current-password";
+  $("#jSave").textContent=me?"비밀번호 바꾸기":signup?"계정 만들기":"로그인";
+  $("#jSwitch").innerHTML=me?`<button type="button" class="link" data-auth="logout">로그아웃</button>`
+    :signup?`이미 계정이 있나요? <button type="button" class="link" data-auth="login">로그인하기</button>`
+    :`처음 왔나요? <button type="button" class="link" data-auth="signup">새 계정 만들기</button>`;
 }
-function showJoin(){ $("#jErr").textContent=""; paintJoin(); showSheet("#joinSheet"); }
-$("#meBtn").onclick=showJoin;
-$("#joinSheet").addEventListener("click",async e=>{
-  if(e.target.id!=="copyAcct") return;
-  const link=location.origin+location.pathname+"#acct="+S.cred.id+"."+S.cred.secret;
-  try{ await navigator.clipboard.writeText(link); toast("계정 링크를 복사했어요"); }
-  catch{ prompt("이 링크를 복사해 주세요",link); }
+function showJoin(mode){ if(mode) authMode=mode; $("#jErr").textContent=""; paintJoin(); showSheet("#joinSheet"); }
+$("#meBtn").onclick=()=>showJoin();
+$("#joinSheet").addEventListener("click",e=>{
+  const b=e.target.closest("[data-auth]"); if(!b) return;
+  if(b.dataset.auth==="logout"){ writeCred(null); S.cred=null; S.me=null; authMode="login"; hideSheet(); toast("로그아웃했어요"); render(); return; }
+  authMode=b.dataset.auth; $("#jErr").textContent=""; paintJoin(); $("#jUser").focus();
 });
 $("#joinSheet").addEventListener("submit",async e=>{
   e.preventDefault(); const err=$("#jErr"); err.textContent="";
-  const name=norm($("#jName").value).slice(0,20); if(!name){ err.textContent="이름을 적어 주세요."; $("#jName").focus(); return; }
   $("#jSave").disabled=true;
   try{
     if(S.cred){
-      const {error}=await S.sb.rpc("rename_member",{p_uid:S.cred.id,p_secret:S.cred.secret,p_name:name}); if(error) throw error;
-      S.profiles[S.me]={name}; hideSheet(); toast("이름을 바꿨어요"); render();
+      const cur=$("#jCur").value, nw=$("#jNew").value;
+      if(!cur||!nw){ err.textContent="비밀번호 두 칸을 모두 적어 주세요."; return; }
+      const {error}=await S.sb.rpc("change_password",{p_uid:S.cred.id,p_secret:S.cred.secret,p_current:cur,p_password:nw}); if(error) throw error;
+      $("#jCur").value=""; $("#jNew").value=""; hideSheet(); toast("비밀번호를 바꿨어요");
     }else{
-      const {data,error}=await S.sb.rpc("join_guide",{p_name:name}); if(error) throw error;
-      S.cred={id:data.id,secret:data.secret}; writeCred(S.cred); S.me=data.id; S.profiles[S.me]={name};
-      hideSheet(); toast(`${name}님, 반가워요`); render();
+      const user=$("#jUser").value.trim(), pass=$("#jPass").value;
+      if(!user){ err.textContent="아이디를 적어 주세요."; $("#jUser").focus(); return; }
+      if(!pass){ err.textContent="비밀번호를 적어 주세요."; $("#jPass").focus(); return; }
+      const signup=authMode==="signup";
+      const {data,error}=await S.sb.rpc(signup?"sign_up":"sign_in",{p_username:user,p_password:pass}); if(error) throw error;
+      S.cred={id:data.id,secret:data.secret}; writeCred(S.cred); S.me=data.id; S.profiles[S.me]={name:data.name};
+      $("#jPass").value=""; hideSheet(); toast(signup?`${data.name}님, 반가워요`:`${data.name}님, 어서 오세요`); render();
     }
-  }catch(ex){ err.textContent="저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요."; }
+  }catch(ex){ err.textContent=authMsg(ex); }
   finally{ $("#jSave").disabled=false; }
 });
 // any write action before joining opens the name sheet first
@@ -1046,7 +1066,7 @@ render();
       render(); loadProfiles();
     });
   });
-  if(!S.cred) setTimeout(()=>{ if(!S.cred&&!openSheet) showJoin(); },700);
+  if(!S.cred) setTimeout(()=>{ if(!S.cred&&!openSheet) showJoin("signup"); },700);
 })();
 })();
 </script>
