@@ -1,6 +1,6 @@
 // App shell cache. The page is fetched network-first so updates land on the next open;
 // static files and fonts are served from cache. Supabase calls are never cached.
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "vendor/supabase.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 

@@ -20,3 +20,9 @@ Supabase 프로젝트 `bapjip-guide` (ap-northeast-2).
 - `docs`: 가게, 후기, 댓글, 평가를 `(col, id, data jsonb)`로 저장. 누구나 읽을 수 있고, 쓰기는 `doc_set`, `doc_patch`, `doc_delete` 함수로만 해요.
 - 내가 쓴 것만 고치거나 지울 수 있어요. 예외로 가게 위치(`lat`, `lng`)는 친구 누구나 찍을 수 있어요.
 - 지우기는 `doc_patch`로 `deleted: true`를 붙여 숨기는 방식이에요. 숨긴 가게나 후기에 딸린 후기, 댓글, 평가도 같이 안 보여요.
+
+## 지도 링크
+
+가게 등록할 때 지도 앱의 공유 내용을 통째로 붙여 넣으면 링크, 가게 이름, 동네를 골라내요.
+`kko.to`, `naver.me` 같은 짧은 링크엔 좌표가 없어서, Supabase Edge Function `resolve-map`
+(`supabase/functions/resolve-map/index.ts`)이 링크를 따라가 위치와 이름을 찾아요. 못 찾으면 등록한 뒤 지도에서 직접 찍어요.

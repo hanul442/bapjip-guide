@@ -364,8 +364,8 @@ html{-webkit-text-size-adjust:100%}
     <h2>어떤 가게를 등록할까요?</h2>
     <div class="field">
       <label for="pMap">지도 링크</label>
-      <input id="pMap" type="url" inputmode="url" placeholder="네이버 지도, 카카오맵, 구글 지도 링크">
-      <span class="hint" id="pMapHint">링크를 붙여 넣으면 가게 이름과 위치를 알아서 읽어요.</span>
+      <textarea id="pMap" rows="3" style="min-height:76px" autocapitalize="off" spellcheck="false" placeholder="[카카오맵] 가게 이름&#10;https://kko.to/..."></textarea>
+      <span class="hint" id="pMapHint">지도 앱에서 공유 → 복사한 내용을 그대로 붙여 넣으면 가게 이름과 위치를 알아서 찾아요.</span>
     </div>
     <div class="two">
       <div class="field"><label for="pName">가게 이름</label><input id="pName" maxlength="60" autocomplete="off"></div>
@@ -804,27 +804,63 @@ $("#pCat").addEventListener("click",e=>{const b=e.target.closest("[data-pcat]");
   pCat=pCat===b.dataset.pcat?"":b.dataset.pcat; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.pcat===pCat));});
 function openAdd(){ $("#pErr").textContent=""; showSheet("#addSheet"); }
 $("#openAdd").onclick=openAdd;
-$("#pMap").addEventListener("input",()=>{
-  const v=$("#pMap").value.trim(); const info=v?parseMap(v):null; const hint=$("#pMapHint"); hint.classList.remove("ok");
-  if(!v){hint.textContent="링크를 붙여 넣으면 가게 이름과 위치를 알아서 읽어요."; return;}
-  if(!info){hint.textContent="https:// 로 시작하는 지도 링크를 붙여 주세요."; return;}
-  if(info.name&&!$("#pName").value) $("#pName").value=info.name;
-  hint.classList.add("ok");
-  hint.textContent = info.lat!=null ? `${info.provider} 위치를 찾았어요. 지도에 핀이 찍혀요.` : `${info.provider} 링크로 저장돼요. 공유 링크엔 좌표가 없어서, 등록한 뒤 지도에서 위치를 직접 찍으면 돼요.`;
-});
+/* map link: paste the whole share text from Naver/Kakao/Google; we keep the link, name and area */
+const MAP_HINT="지도 앱에서 공유 → 복사한 내용을 그대로 붙여 넣으면 가게 이름과 위치를 알아서 찾아요.";
+function readShare(text){
+  const raw=String(text||"");
+  const m=raw.match(/https?:\/\/[^\s<>"']+/); const url=m?m[0].replace(/[)\].,]+$/,""):"";
+  const lines=raw.replace(m?m[0]:"","").split(/\n+/).map(s=>s.replace(/\[[^\]]*\]/g,"").trim()).filter(Boolean)
+    .filter(s=>!/^(카카오\s*맵|네이버\s*지도|google\s*maps?|지도에서 보기|공유)$/i.test(s));
+  const isAddr=s=>/[가-힣]+(시|도|구|군)(\s|$)/.test(s)&&/\d/.test(s);
+  const addr=lines.find(isAddr)||"";
+  const name=lines.find(s=>s!==addr&&s.length<=40&&!/^https?:/i.test(s))||"";
+  const am=addr.match(/([가-힣0-9]+동)(?=\s|$)/)||addr.match(/([가-힣]+구)(?=\s|$)/);
+  return {url,name,area:am?am[1]:""};
+}
+S.share=null; S.sharePending=null; let shareSeq=0, shareT=null;
+function shareHint(t,good){ const h=$("#pMapHint"); h.textContent=t; h.classList.toggle("ok",!!good); }
+function onShare(){
+  const raw=$("#pMap").value; const sh=readShare(raw); S.share=null; ++shareSeq;
+  if(!raw.trim()){ shareHint(MAP_HINT); return; }
+  if(!sh.url){ shareHint("링크가 안 보여요. 지도 앱에서 공유 → 복사한 내용을 붙여 넣어 주세요."); return; }
+  const info=parseMap(sh.url);
+  if(!info){ shareHint("지도 링크를 읽지 못했어요. 네이버 지도, 카카오맵, 구글 지도 링크를 붙여 주세요."); return; }
+  const nm=sh.name||info.name;
+  if(nm&&!$("#pName").value) $("#pName").value=nm.slice(0,60);
+  if(sh.area&&!$("#pArea").value) $("#pArea").value=sh.area.slice(0,40);
+  const share=S.share={url:sh.url,provider:info.provider,lat:info.lat,lng:info.lng};
+  if(info.lat!=null){ shareHint(`${info.provider} 위치를 찾았어요. 지도에 핀이 찍혀요.`,true); return; }
+  shareHint(`${info.provider} 링크에서 위치를 찾는 중이에요…`);
+  const seq=shareSeq;
+  S.sharePending=(async()=>{
+    try{
+      const r=await fetch(`${SB_URL}/functions/v1/resolve-map?url=${encodeURIComponent(sh.url)}`,{headers:{apikey:SB_KEY}});
+      const j=await r.json(); if(seq!==shareSeq) return;
+      if(j.name&&!$("#pName").value) $("#pName").value=String(j.name).slice(0,60);
+      if(j.lat==null) throw new Error("no_point");
+      share.lat=+(+j.lat).toFixed(6); share.lng=+(+j.lng).toFixed(6);
+      shareHint(`${info.provider} 위치를 찾았어요. 지도에 핀이 찍혀요.`,true);
+    }catch{ if(seq===shareSeq) shareHint(`${info.provider} 링크로 저장돼요. 위치는 못 찾아서, 등록한 뒤 지도에서 직접 찍으면 돼요.`,true); }
+    finally{ if(seq===shareSeq) S.sharePending=null; }
+  })();
+}
+$("#pMap").addEventListener("input",()=>{ clearTimeout(shareT); shareT=setTimeout(()=>{ shareT=null; onShare(); },350); });
+$("#pMap").addEventListener("paste",()=>{ clearTimeout(shareT); shareT=setTimeout(()=>{ shareT=null; onShare(); },0); });
 $("#addSheet").addEventListener("submit",async e=>{
   e.preventDefault(); const err=$("#pErr"); err.textContent="";
   if(!S.db){ err.textContent="로그인한 상태에서만 등록할 수 있어요."; return; }
   const name=norm($("#pName").value); if(!name){err.textContent="가게 이름을 적어 주세요."; $("#pName").focus(); return;}
-  const url=$("#pMap").value.trim(); const info=url?parseMap(url):null;
-  if(url&&!info){err.textContent="지도 링크는 https:// 로 시작해야 해요."; return;}
-  const id=mkId("p"); const now=Date.now();
   $("#pSave").disabled=true;
-  try{ await save("places",id,{name,area:norm($("#pArea").value),category:pCat,mapUrl:info?url:"",provider:info?info.provider:"",
-         lat:info?info.lat:null,lng:info?info.lng:null,createdBy:S.me||"",createdAt:now,updatedAt:now});
-       $("#addSheet").reset(); pCat=""; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed","false"));
-       $("#pMapHint").textContent="링크를 붙여 넣으면 가게 이름과 위치를 알아서 읽어요."; $("#pMapHint").classList.remove("ok");
-       hideSheet(); toast("가게를 등록했어요"); dir="fwd"; location.hash=id; }
+  try{
+    if(shareT){ clearTimeout(shareT); shareT=null; onShare(); }
+    if(S.sharePending) await S.sharePending;
+    const raw=$("#pMap").value.trim(), sh=S.share;
+    if(raw&&!sh){ err.textContent="지도 링크를 읽지 못했어요. 지우거나 다른 링크를 붙여 주세요."; return; }
+    const id=mkId("p"); const now=Date.now();
+    await save("places",id,{name,area:norm($("#pArea").value),category:pCat,mapUrl:sh?sh.url:"",provider:sh?sh.provider:"",
+         lat:sh?sh.lat:null,lng:sh?sh.lng:null,createdBy:S.me||"",createdAt:now,updatedAt:now});
+    $("#addSheet").reset(); pCat=""; S.share=null; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed","false"));
+    shareHint(MAP_HINT); hideSheet(); toast("가게를 등록했어요"); dir="fwd"; location.hash=id; }
   catch(ex){ writeFailed(ex,err); } finally{ $("#pSave").disabled=false; }
 });
 
