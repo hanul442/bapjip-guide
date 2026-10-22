@@ -317,6 +317,12 @@ button{cursor:pointer;border:0;background:none;padding:0}
 [hidden]{display:none!important}
 html,body{margin:0}
 html{-webkit-text-size-adjust:100%}
+.info{display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.irow{display:grid;grid-template-columns:44px 1fr;gap:10px}.irow .k{color:var(--muted)}.irow a{color:var(--blue);text-decoration:none}
+.mhead{margin:18px 0 8px;font-weight:700;font-size:15px}.mhead .hint{font-weight:400;margin-left:4px}
+.mboard{display:flex;flex-direction:column}
+.mrow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}.mrow .mn{min-width:0;overflow-wrap:anywhere}.mrow .mp{color:var(--sub);white-space:nowrap}
 #install{display:flex;gap:10px;align-items:center}
 #install[hidden]{display:none}
 #install .grow{flex:1;min-width:0}
@@ -595,6 +601,7 @@ function render(){
   let saved = keepMap ? liveMap.vb.slice() : null;
   keepInputs(()=>{ v.innerHTML = place ? detailHTML(place) : S.loaded ? (S.tab==="map"?mapHTML():S.tab==="list"?listHTML():feedHTML()) : loadingHTML(); });
   mountMap(place, saved);
+  if(place) backfillInfo(place);
   if(fresh){
     v.classList.remove("in-fwd","in-back","in-fade","stagger"); void v.offsetWidth;
     if(lastView&&lastView!=="loading") v.classList.add(dir==="back"?"in-back":dir==="tab"?"in-fade":"in-fwd");
@@ -731,11 +738,21 @@ function listHTML(){
   return h;
 }
 
+function infoHTML(p,cls){
+  const i=p.info; if(!i) return p.mapUrl&&S.cred&&!infoTried[p.id+"_done"]?`<section class="card ${cls}"><div class="hint">${esc(p.provider||"지도")}에서 가게 정보를 가져오는 중이에요…</div></section>`:"";
+  const ms=i.menus||[]; const key="menu_"+p.id; const all=!!S.open[key]; const show=all?ms:ms.slice(0,6);
+  const rows=[i.category&&`<div class="irow"><span class="k">종류</span><span>${esc(i.category)}</span></div>`,
+    i.address&&`<div class="irow"><span class="k">주소</span><span>${esc(i.address)}</span></div>`,
+    i.phone&&`<div class="irow"><span class="k">전화</span><a href="tel:${esc(i.phone.replace(/[^0-9+]/g,""))}">${esc(i.phone)}</a></div>`].filter(Boolean).join("");
+  return `<section class="card ${cls}"><div class="card-head"><h2>가게 정보</h2></div>${rows?`<div class="info">${rows}</div>`:""}
+    ${ms.length?`<div class="mhead">메뉴판 <span class="hint">${esc(p.provider||"지도")} 기준</span></div><div class="mboard">${show.map(m=>`<div class="mrow"><span class="mn">${esc(m.name)}</span><span class="mp num">${m.price?won(m.price):"-"}</span></div>`).join("")}</div>
+    ${ms.length>6?`<button type="button" class="link" data-toggle="${esc(key)}" style="margin-top:10px">${all?"접기":`메뉴 ${ms.length}개 모두 보기`}</button>`:""}`:`<div class="hint" style="margin-top:8px">메뉴판 정보는 없어요.</div>`}</section>`;
+}
 function detailHTML(p){
   let i=0; const st=()=>`st" style="--i:${i++}`;
   const s=placeStats(p.id); const max=s.rows[0]?s.rows[0].n:1;
   const pcs=S.placeComments.filter(c=>c.placeId===p.id).sort((a,b)=>a.createdAt-b.createdAt);
-  let h=`<section class="dhead ${st()}"><div class="s">${esc([p.category,p.area].filter(Boolean).join(" · ")||"맛집")}</div><h1>${esc(p.name)}</h1></section>
+  let h=`<section class="dhead ${st()}"><div class="s">${esc([p.category||(p.info&&p.info.category),p.area||(p.info&&p.info.area)].filter(Boolean).join(" · ")||"맛집")}</div><h1>${esc(p.name)}</h1></section>
   <section class="card verdict ${st()}">
     <div class="vr">${roses(s.rating,true)}</div>
     <div class="vg">${s.rating!=null?esc(grade(s.rating)):"아직 아무도 평가하지 않았어요"}</div>
@@ -747,7 +764,8 @@ function detailHTML(p){
     <div class="mapwrap pick"><svg role="img" aria-label="위치 고르기 지도"></svg>${ctlHTML}</div>
     <button type="button" class="cta" id="pickSave" data-savepick="${esc(p.id)}" style="margin-top:12px" ${S.pick&&S.pick.pid===p.id?"":"disabled"}>${S.pick&&S.pick.pid===p.id?"이 위치로 저장":"지도를 눌러 위치를 골라 주세요"}</button></section>`;
   if(p.lat!=null) h+=`<div class="mapwrap mini ${st()}"><svg role="img" aria-label="${esc(p.name)} 위치"></svg>${ctlHTML}</div>`;
-  if(p.mapUrl) h+=`<a class="cta soft ${st()}" href="${esc(p.mapUrl)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21s7-6 7-11.5a7 7 0 1 0-14 0C5 15 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>${esc(p.provider||"지도")}에서 길찾기</a>`;
+  if(p.mapUrl) h+=`<a class="cta soft ${st()}" href="${esc((p.info&&p.info.url)||p.mapUrl)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21s7-6 7-11.5a7 7 0 1 0-14 0C5 15 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>${esc(p.provider||"지도")}에서 보기</a>`;
+  h+=infoHTML(p,st());
   h+=`<section class="card ${st()}"><div class="kpis">
     <div class="kpi"><div class="k">평균 가격</div><div class="v num">${s.avgPrice!=null?`<span data-count="${Math.round(s.avgPrice)}">${fmt(s.avgPrice)}</span><small>원</small>`:"-"}</div></div>
     <div class="kpi"><div class="k">메뉴 후기</div><div class="v num"><span data-count="${s.rs.length}">${s.rs.length}</span><small>개</small></div></div>
@@ -804,6 +822,30 @@ $("#pCat").addEventListener("click",e=>{const b=e.target.closest("[data-pcat]");
   pCat=pCat===b.dataset.pcat?"":b.dataset.pcat; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.pcat===pCat));});
 function openAdd(){ $("#pErr").textContent=""; showSheet("#addSheet"); }
 $("#openAdd").onclick=openAdd;
+/* place info from the map service (address, phone, menu board) */
+function cleanInfo(i){
+  const t=(v,n)=>String(v==null?"":v).slice(0,n);
+  return {source:t(i.source,10),placeId:t(i.placeId,20),address:t(i.address,120),category:t(i.category,30),phone:t(i.phone,30),area:t(i.area,40),
+    url:/^https:\/\/[a-z0-9.-]*(kakao\.com|naver\.com)\//i.test(i.url||"")?t(i.url,200):"",
+    menus:(Array.isArray(i.menus)?i.menus:[]).slice(0,40).map(m=>({name:t(m&&m.name,50),price:Math.max(0,Math.round(+(m&&m.price)||0))})).filter(m=>m.name)};
+}
+function catFrom(c){ c=String(c||"");
+  const map=[["술집",/술|바$|와인|호프|포차|이자카야|맥주|칵테일/],["카페",/카페|디저트|베이커리|빵|커피/],["일식",/일식|초밥|스시|라멘|돈까스|돈카츠|우동/],
+    ["중식",/중식|중국|마라|짜장|딤섬/],["양식",/양식|이탈리|파스타|피자|스테이크|버거|프랑스|브런치/],["분식",/분식|떡볶이|김밥/],
+    ["아시안",/아시아|베트남|태국|인도|쌀국수/],["한식",/한식|고기|국밥|찌개|냉면|곱창|삼겹|갈비|해장|국수|족발|보쌈|치킨/]];
+  const hit=map.find(([,re])=>re.test(c)); return hit?hit[0]:""; }
+const infoTried={};
+async function backfillInfo(p){
+  if(!p||!p.mapUrl||p.info||!S.cred||infoTried[p.id]) return; infoTried[p.id]=1;
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/resolve-map?url=${encodeURIComponent(p.mapUrl)}`,{headers:{apikey:SB_KEY}});
+    const j=await r.json(); if(!j||(!j.info&&j.lat==null)) return;
+    const patch={}; if(j.info) patch.info=cleanInfo(j.info);
+    if(p.lat==null&&j.lat!=null){ patch.lat=+(+j.lat).toFixed(6); patch.lng=+(+j.lng).toFixed(6); }
+    if(Object.keys(patch).length) await S.db.collection("places").doc(p.id).update(patch);
+  }catch{}
+  finally{ infoTried[p.id+"_done"]=1; if(!p.info) render(); }
+}
 /* map link: paste the whole share text from Naver/Kakao/Google; we keep the link, name and area */
 const MAP_HINT="지도 앱에서 공유 → 복사한 내용을 그대로 붙여 넣으면 가게 이름과 위치를 알아서 찾아요.";
 function readShare(text){
@@ -827,7 +869,7 @@ function onShare(){
   if(!info){ shareHint("지도 링크를 읽지 못했어요. 네이버 지도, 카카오맵, 구글 지도 링크를 붙여 주세요."); return; }
   const nm=sh.name||info.name;
   if(nm&&!$("#pName").value) $("#pName").value=nm.slice(0,60);
-  if(sh.area&&!$("#pArea").value) $("#pArea").value=sh.area.slice(0,40);
+  if(sh.area&&!$("#pArea").value){ $("#pArea").value=sh.area.slice(0,40); $("#pArea").dataset.auto=$("#pArea").value; }
   const share=S.share={url:sh.url,provider:info.provider,lat:info.lat,lng:info.lng};
   if(info.lat!=null){ shareHint(`${info.provider} 위치를 찾았어요. 지도에 핀이 찍혀요.`,true); return; }
   shareHint(`${info.provider} 링크에서 위치를 찾는 중이에요…`);
@@ -837,9 +879,13 @@ function onShare(){
       const r=await fetch(`${SB_URL}/functions/v1/resolve-map?url=${encodeURIComponent(sh.url)}`,{headers:{apikey:SB_KEY}});
       const j=await r.json(); if(seq!==shareSeq) return;
       if(j.name&&!$("#pName").value) $("#pName").value=String(j.name).slice(0,60);
+      if(j.info){ share.info=cleanInfo(j.info);
+        if(share.info.area&&(!$("#pArea").value||$("#pArea").value===$("#pArea").dataset.auto)) $("#pArea").value=share.info.area.slice(0,40);
+        const c=catFrom(share.info.category); if(c&&!pCat){ pCat=c; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.pcat===pCat)); } }
       if(j.lat==null) throw new Error("no_point");
       share.lat=+(+j.lat).toFixed(6); share.lng=+(+j.lng).toFixed(6);
-      shareHint(`${info.provider} 위치를 찾았어요. 지도에 핀이 찍혀요.`,true);
+      const nm=share.info&&share.info.menus.length;
+      shareHint(`${info.provider} 위치를 찾았어요.${nm?` 메뉴 ${nm}개도 가져왔어요.`:""}`,true);
     }catch{ if(seq===shareSeq) shareHint(`${info.provider} 링크로 저장돼요. 위치는 못 찾아서, 등록한 뒤 지도에서 직접 찍으면 돼요.`,true); }
     finally{ if(seq===shareSeq) S.sharePending=null; }
   })();
@@ -858,7 +904,7 @@ $("#addSheet").addEventListener("submit",async e=>{
     if(raw&&!sh){ err.textContent="지도 링크를 읽지 못했어요. 지우거나 다른 링크를 붙여 주세요."; return; }
     const id=mkId("p"); const now=Date.now();
     await save("places",id,{name,area:norm($("#pArea").value),category:pCat,mapUrl:sh?sh.url:"",provider:sh?sh.provider:"",
-         lat:sh?sh.lat:null,lng:sh?sh.lng:null,createdBy:S.me||"",createdAt:now,updatedAt:now});
+         lat:sh?sh.lat:null,lng:sh?sh.lng:null,...(sh&&sh.info?{info:sh.info}:{}),createdBy:S.me||"",createdAt:now,updatedAt:now});
     $("#addSheet").reset(); pCat=""; S.share=null; document.querySelectorAll("[data-pcat]").forEach(x=>x.setAttribute("aria-pressed","false"));
     shareHint(MAP_HINT); hideSheet(); toast("가게를 등록했어요"); dir="fwd"; location.hash=id; }
   catch(ex){ writeFailed(ex,err); } finally{ $("#pSave").disabled=false; }
@@ -869,7 +915,12 @@ function paintVerdict(){ $("#rVerdict").innerHTML=Object.entries(VERDICTS).map((
 paintVerdict();
 $("#rVerdict").addEventListener("click",e=>{const b=e.target.closest("[data-verdict]"); if(!b) return; S.verdict=b.dataset.verdict; paintVerdict();});
 $("#rPrice").addEventListener("input",e=>{ const d=e.target.value.replace(/[^\d]/g,"").slice(0,8); e.target.value=d?fmt(+d)+"원":""; });
-const fillMenus=pid=>{ $("#menuList").innerHTML=pid?placeStats(pid).rows.map(m=>`<option value="${esc(m.name)}">`).join(""):""; };
+const fillMenus=pid=>{ if(!pid){ $("#menuList").innerHTML=""; return; }
+  const seen=new Set(), names=[]; placeStats(pid).rows.forEach(m=>{ if(!seen.has(m.name)){ seen.add(m.name); names.push(m.name); } });
+  const p=placeOf(pid); ((p&&p.info&&p.info.menus)||[]).forEach(m=>{ if(!seen.has(m.name)){ seen.add(m.name); names.push(m.name); } });
+  $("#menuList").innerHTML=names.map(n=>`<option value="${esc(n)}">`).join(""); };
+$("#rMenu").addEventListener("change",()=>{ const p=currentPlace()||placeOf($("#rPlace").value); const v=norm($("#rMenu").value);
+  const m=p&&p.info&&(p.info.menus||[]).find(x=>x.name===v); if(m&&m.price&&!$("#rPrice").value) $("#rPrice").value=fmt(m.price)+"원"; });
 $("#rPlace").addEventListener("change",e=>fillMenus(e.target.value));
 $("#dockBtn").onclick=()=>{
   const p=currentPlace(); $("#rErr").textContent="";

@@ -76,22 +76,36 @@ async function follow(start: string) {
   return { chain, final: cur, html: "" };
 }
 
+// Kakao's place panel API: name, point, address, category, phone and the menu board.
 // deno-lint-ignore no-explicit-any
 async function kakao(id: string): Promise<any> {
-  const tries: [string, Record<string, string>][] = [
-    [`https://place-api.map.kakao.com/places/panel3/${id}`, { pf: "web", Referer: "https://place.map.kakao.com/", Accept: "application/json" }],
-    [`https://place.map.kakao.com/main/v/${id}`, { Referer: "https://place.map.kakao.com/", Accept: "application/json" }],
-  ];
-  for (const [u, h] of tries) {
-    try {
-      const r = await get(u, h); if (!r.ok) { await r.body?.cancel(); continue; }
-      const j = await r.json();
-      const pt = scanJson(j);
-      const name = (j?.summary?.name || j?.basicInfo?.placenamefull || j?.name || "") as string;
-      if (pt || name) return { ...(pt || {}), name };
-    } catch { /* try the next one */ }
-  }
-  return null;
+  try {
+    const r = await get(`https://place-api.map.kakao.com/places/panel3/${id}`, { pf: "web", Referer: "https://place.map.kakao.com/", Accept: "application/json" });
+    if (!r.ok) { console.log("kakao panel", r.status); await r.body?.cancel(); return null; }
+    const j = await r.json();
+    const sm = j?.summary || {};
+    const pt = ok(sm?.point?.lat, sm?.point?.lon) || scanJson(sm) || scanJson(j);
+    const regions = Array.isArray(sm.regions) ? sm.regions : [];
+    const dong = regions.find((x: { depth: number }) => x.depth === 3)?.name || "";
+    const gu = regions.find((x: { depth: number }) => x.depth === 2)?.name || "";
+    const items = Array.isArray(j?.menu?.menus?.items) ? j.menu.menus.items : [];
+    const menus = items.slice(0, 40).map((m: { name?: string; price?: number | string }) => ({
+      name: String(m.name || "").trim().slice(0, 50),
+      price: Number(String(m.price ?? "").replace(/[^\d]/g, "")) || 0,
+    })).filter((m: { name: string }) => m.name);
+    return {
+      ...(pt || {}), name: String(sm.name || ""),
+      info: {
+        source: "kakao", placeId: id,
+        address: String(sm?.address?.disp || sm?.address?.road || "").slice(0, 120),
+        category: String(sm?.category?.name || "").slice(0, 30),
+        phone: String(sm?.phone_numbers?.[0]?.tel || "").slice(0, 30),
+        area: dong || gu,
+        menus,
+        url: `https://place.map.kakao.com/${id}`,
+      },
+    };
+  } catch (e) { console.log("kakao error", String(e)); return null; }
 }
 // deno-lint-ignore no-explicit-any
 async function naver(id: string): Promise<any> {
@@ -119,16 +133,19 @@ Deno.serve(async (req) => {
     let pt: { lat: number; lng: number } | null = null, name = "";
     for (const u of chain) { pt = fromUrl(u); if (pt) break; }
     const all = chain.join(" ");
-    let m;
-    if ((!pt || !name) && (m = all.match(/place\.map\.kakao\.com\/(?:m\/)?(\d+)/) || all.match(/[?&]itemId=(\d+)/))) {
-      const k = await kakao(m[1]); if (k) { pt = pt || (k.lat ? { lat: k.lat, lng: k.lng! } : null); name = k.name || name; }
+    let m, info = null;
+    const kid = all.match(/place\.map\.kakao\.com\/(?:m\/)?(\d+)/) || all.match(/[?&]itemId=(\d+)/) || (/kakao/.test(all) ? all.match(/kakao\.com\/place\?(?:[^ ]*&)?id=(\d+)/) : null);
+    if (kid) {
+      const k = await kakao(kid[1]);
+      if (k) { pt = pt || (k.lat ? { lat: k.lat, lng: k.lng } : null); name = k.name || name; info = k.info; }
     }
     if ((!pt || !name) && (m = all.match(/(?:entry\/place|place\.naver\.com\/[a-z]+|\/place)\/(\d{5,})/))) {
       const n = await naver(m[1]); if (n) { pt = pt || (n.lat ? { lat: n.lat, lng: n.lng! } : null); name = n.name || name; }
     }
     if (html) { pt = pt || scanHtml(html); name = name || ogTitle(html); }
-    console.log(JSON.stringify({ chain, found: !!pt, name }));
-    return json({ ...(pt || {}), name, final });
+    if (/^(카카오\s*맵|kakao\s*map|네이버\s*지도|naver\s*map|naver|google\s*maps?)$/i.test(name.trim())) name = "";
+    console.log(JSON.stringify({ chain, found: !!pt, name, menus: info ? info.menus.length : 0 }));
+    return json({ ...(pt || {}), name, final, info });
   } catch (e) {
     console.log("resolve error", String(e));
     return json({ error: "failed" }, 502);
