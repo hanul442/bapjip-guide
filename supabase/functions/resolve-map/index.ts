@@ -107,17 +107,61 @@ async function kakao(id: string): Promise<any> {
     };
   } catch (e) { console.log("kakao error", String(e)); return null; }
 }
+// Naver: the map's summary API gives name, point, address and category; the mobile menu page
+// (Apollo state inside the HTML) gives the menu board and phone. Both want a map.naver.com Referer.
+const NREF = { Referer: "https://map.naver.com/", Accept: "application/json, text/html" };
+const unq = (x: string) => { try { return JSON.parse(`"${x}"`); } catch { return x; } };
 // deno-lint-ignore no-explicit-any
 async function naver(id: string): Promise<any> {
-  for (const u of [`https://m.place.naver.com/place/${id}/home`, `https://m.place.naver.com/restaurant/${id}/home`]) {
-    try {
-      const r = await get(u); if (!r.ok) { await r.body?.cancel(); continue; }
-      const h = await r.text();
-      const pt = scanHtml(h); const name = ogTitle(h);
-      if (pt || name) return { ...(pt || {}), name };
-    } catch { /* next */ }
-  }
-  return null;
+  // deno-lint-ignore no-explicit-any
+  let d: any = null;
+  try {
+    const r = await get(`https://map.naver.com/p/api/place/summary/${id}`, NREF);
+    if (r.ok) d = (await r.json())?.data?.placeDetail; else { console.log("naver summary", r.status); await r.body?.cancel(); }
+  } catch (e) { console.log("naver summary error", String(e)); }
+  const menus: { name: string; price: number }[] = []; let phone = "";
+  try {
+    const r = await get(`https://m.place.naver.com/restaurant/${id}/menu/list`, NREF);
+    if (r.ok) {
+      const h = (await r.text()).slice(0, 2000000);
+      const seen = new Set<string>();
+      for (const part of h.split('"__typename":"PlaceMenuItem"').slice(1)) {
+        const nm = part.match(/^[^{}]*?"name":"((?:[^"\\]|\\.)*)"/);
+        if (!nm) continue;
+        const name = unq(nm[1]).trim().slice(0, 50);
+        if (!name || seen.has(name)) continue; seen.add(name);
+        const pr = part.slice(0, 3000).match(/"PlaceMenuPrice"[^{}]*?"displayText":"([^"]*)"/) || part.slice(0, 3000).match(/"price":"?(\d[\d,]*)/);
+        menus.push({ name, price: pr ? Number(unq(pr[1]).replace(/[^\d]/g, "")) || 0 : 0 });
+        if (menus.length >= 40) break;
+      }
+      const ph = h.match(/"virtualPhone":"([^"]+)"/) || h.match(/"phone":"([^"]+)"/);
+      phone = ph ? ph[1] : "";
+      // The summary API often answers 429 to server IPs; the same facts sit in the page's PlaceDetailBase.
+      const bi = h.indexOf('"PlaceDetailBase:'); const base = bi >= 0 ? h.slice(bi, bi + 4000) : "";
+      const f = (k: string) => { const x = base.match(new RegExp(`"${k}":"((?:[^"\\\\]|\\\\.)*)"`)); return x ? unq(x[1]) : ""; };
+      d = d || {};
+      if (!d.name) d.name = f("name") || ogTitle(h);
+      if (!ok(d?.coordinate?.latitude, d?.coordinate?.longitude)) { const pt = scanHtml(h); if (pt) d.coordinate = { latitude: pt.lat, longitude: pt.lng }; }
+      d.category = d.category?.category ? d.category : { category: f("category") };
+      d.address = d.address?.roadAddress ? d.address : { roadAddress: f("roadAddress"), address: f("address") };
+    } else { console.log("naver menu", r.status); await r.body?.cancel(); }
+  } catch (e) { console.log("naver menu error", String(e)); }
+  if (!d || (!d.name && !d.coordinate)) return null;
+  const pt = ok(d?.coordinate?.latitude, d?.coordinate?.longitude);
+  const fa = String(d?.address?.formattedAddress || "").trim().split(/\s+/);
+  const dong = String(d?.address?.address || "").match(/(\S+(?:동|읍|면|가))(?=\s|$)/);
+  return {
+    ...(pt || {}), name: String(d.name || ""),
+    info: {
+      source: "naver", placeId: id,
+      address: String(d?.address?.roadAddress || d?.address?.address || "").slice(0, 120),
+      category: String(d?.category?.category || "").slice(0, 30),
+      phone: phone.slice(0, 30),
+      area: fa.length > 1 ? fa[fa.length - 1] : dong ? dong[1] : "",
+      menus,
+      url: `https://m.place.naver.com/restaurant/${id}/home`,
+    },
+  };
 }
 
 Deno.serve(async (req) => {
@@ -139,8 +183,9 @@ Deno.serve(async (req) => {
       const k = await kakao(kid[1]);
       if (k) { pt = pt || (k.lat ? { lat: k.lat, lng: k.lng } : null); name = k.name || name; info = k.info; }
     }
-    if ((!pt || !name) && (m = all.match(/(?:entry\/place|place\.naver\.com\/[a-z]+|\/place)\/(\d{5,})/))) {
-      const n = await naver(m[1]); if (n) { pt = pt || (n.lat ? { lat: n.lat, lng: n.lng! } : null); name = n.name || name; }
+    if (!info && /naver/.test(all) && (m = all.match(/(?:entry\/place|place\.naver\.com\/[a-z]+|\/place)\/(\d{5,})/) || all.match(/[?&](?:pinId|id)=(\d{5,})/))) {
+      const n = await naver(m[1]);
+      if (n) { pt = pt || (n.lat ? { lat: n.lat, lng: n.lng } : null); name = n.name || name; info = n.info; }
     }
     if (html) { pt = pt || scanHtml(html); name = name || ogTitle(html); }
     if (/^(카카오\s*맵|kakao\s*map|네이버\s*지도|naver\s*map|naver|google\s*maps?)$/i.test(name.trim())) name = "";
